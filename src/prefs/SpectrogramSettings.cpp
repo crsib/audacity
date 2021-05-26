@@ -13,10 +13,8 @@ Paul Licameli
 
 *//*******************************************************************/
 
-#include "../Audacity.h"
-#include "SpectrogramSettings.h"
 
-#include "../Experimental.h"
+#include "SpectrogramSettings.h"
 
 #include "../NumberScale.h"
 

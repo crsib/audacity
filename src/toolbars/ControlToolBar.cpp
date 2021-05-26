@@ -30,10 +30,8 @@
 
 *//*******************************************************************/
 
-#include "../Audacity.h" // for USE_* macros
-#include "ControlToolBar.h"
 
-#include "../Experimental.h"
+#include "ControlToolBar.h"
 
 #include <algorithm>
 #include <cfloat>

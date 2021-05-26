@@ -1,7 +1,10 @@
 #!/bin/sh
+# Run this script with locale as the current directory
 set -o errexit
 echo ";; Recreating audacity.pot using .h, .cpp and .mm files"
-for path in ../modules/mod-script* ../modules/mod-nyq* ../include ../src ; do find $path -name \*.h -o -name \*.cpp -o -name \*.mm ; done | LANG=c sort | \
+for path in ../modules/mod-* ../libraries/lib-* ../include ../src ; do
+   find $path -name \*.h -o -name \*.cpp -o -name \*.mm
+done | LANG=c sort | \
 sed -E 's/\.\.\///g' |\
 xargs xgettext \
 --default-domain=audacity \
@@ -11,7 +14,7 @@ xargs xgettext \
 --add-location=file  \
 --copyright-holder='Audacity Team' \
 --package-name="audacity" \
---package-version='3.0.1' \
+--package-version='3.0.3' \
 --msgid-bugs-address="audacity-translation@lists.sourceforge.net" \
 --add-location=file -L C -o audacity.pot 
 echo ";; Adding nyquist files to audacity.pot"
@@ -25,7 +28,7 @@ xargs xgettext \
 --add-location=file  \
 --copyright-holder='Audacity Team' \
 --package-name="audacity" \
---package-version='3.0.1' \
+--package-version='3.0.3' \
 --msgid-bugs-address="audacity-translation@lists.sourceforge.net" \
 --add-location=file -L Lisp -j -o audacity.pot 
 if test "${AUDACITY_ONLY_POT:-}" = 'y'; then
@@ -33,14 +36,15 @@ if test "${AUDACITY_ONLY_POT:-}" = 'y'; then
 fi
 echo ";; Updating the .po files - Updating Project-Id-Version"
 for i in *.po; do
-    sed -i '/^"Project-Id-Version:/c\"Project-Id-Version: audacity 3.0.1\\n"' $i
+    sed -e '/^"Project-Id-Version:/c\
+    "Project-Id-Version: audacity 3.0.3\\n"' $i > TEMP; mv TEMP $i
 done
 echo ";; Updating the .po files"
 sed 's/.*/echo "msgmerge --lang=& &.po audacity.pot -o &.po";\
 msgmerge --lang=& &.po audacity.pot -o &.po;/g' LINGUAS | bash
 echo ";; Removing '#~|' (which confuse Windows version of msgcat)"
 for i in *.po; do
-    sed -i '/^#~|/d' $i
+    sed '/^#~|/d' $i > TEMP; mv TEMP $i
 done
 echo ""
 echo ";;Translation updated"

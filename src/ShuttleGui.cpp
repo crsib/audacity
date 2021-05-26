@@ -93,10 +93,10 @@ for registering for changes.
 *//******************************************************************/
 
 
-#include "Audacity.h"
+
 #include "ShuttleGui.h"
 
-#include "Experimental.h"
+
 
 #include "Prefs.h"
 #include "ShuttlePrefs.h"
@@ -114,6 +114,7 @@ for registering for changes.
 #include <wx/stattext.h>
 #include <wx/bmpbuttn.h>
 #include "../include/audacity/ComponentInterface.h"
+#include "widgets/ReadOnlyText.h"
 #include "widgets/wxPanelWrapper.h"
 #include "widgets/wxTextCtrlWrapper.h"
 #include "AllThemeResources.h"
@@ -483,6 +484,27 @@ wxStaticText * ShuttleGuiBase::AddVariableText(
       else
          UpdateSizers();
    return pStatic;
+}
+
+ReadOnlyText * ShuttleGuiBase::AddReadOnlyText(
+   const TranslatableString &Caption, const wxString &Value)
+{
+   const auto translated = Caption.Translation();
+   auto style = GetStyle( wxBORDER_NONE );
+   HandleOptionality( Caption );
+   mItem.miStyle = wxALIGN_CENTER_VERTICAL;
+   AddPrompt( Caption );
+   UseUpId();
+   if( mShuttleMode != eIsCreating )
+      return wxDynamicCast(wxWindow::FindWindowById( miId, mpDlg), ReadOnlyText);
+   ReadOnlyText * pReadOnlyText;
+   miProp=0;
+
+   mpWind = pReadOnlyText = safenew ReadOnlyText(GetParent(), miId, Value,
+      wxDefaultPosition, wxDefaultSize, GetStyle( style ));
+   mpWind->SetName(wxStripMenuCodes(translated));
+   UpdateSizers();
+   return pReadOnlyText;
 }
 
 wxComboBox * ShuttleGuiBase::AddCombo(
@@ -1793,7 +1815,7 @@ bool ShuttleGuiBase::DoStep( int iStep )
 /// between gui and stack variable and stack variable and shuttle.
 wxCheckBox * ShuttleGuiBase::TieCheckBox(
    const TranslatableString &Prompt,
-   const SettingSpec< bool > &Setting)
+   const BoolSetting &Setting)
 {
    wxCheckBox * pCheck=NULL;
 
@@ -1810,7 +1832,7 @@ wxCheckBox * ShuttleGuiBase::TieCheckBox(
 /// between gui and stack variable and stack variable and shuttle.
 wxCheckBox * ShuttleGuiBase::TieCheckBoxOnRight(
    const TranslatableString &Prompt,
-   const SettingSpec< bool > &Setting)
+   const BoolSetting & Setting)
 {
    wxCheckBox * pCheck=NULL;
 
@@ -1827,7 +1849,7 @@ wxCheckBox * ShuttleGuiBase::TieCheckBoxOnRight(
 /// between gui and stack variable and stack variable and shuttle.
 wxSlider * ShuttleGuiBase::TieSlider(
    const TranslatableString &Prompt,
-   const SettingSpec< int > &Setting,
+   const IntSetting & Setting,
    const int max,
    const int min)
 {
@@ -1846,7 +1868,7 @@ wxSlider * ShuttleGuiBase::TieSlider(
 /// between gui and stack variable and stack variable and shuttle.
 wxSpinCtrl * ShuttleGuiBase::TieSpinCtrl(
    const TranslatableString &Prompt,
-   const SettingSpec< int > &Setting,
+   const IntSetting &Setting,
    const int max,
    const int min)
 {
@@ -1865,7 +1887,7 @@ wxSpinCtrl * ShuttleGuiBase::TieSpinCtrl(
 /// between gui and stack variable and stack variable and shuttle.
 wxTextCtrl * ShuttleGuiBase::TieTextBox(
    const TranslatableString & Prompt,
-   const SettingSpec< wxString > &Setting,
+   const StringSetting & Setting,
    const int nChars)
 {
    wxTextCtrl * pText=(wxTextCtrl*)NULL;
@@ -1883,7 +1905,7 @@ wxTextCtrl * ShuttleGuiBase::TieTextBox(
 /// This one does it for double values...
 wxTextCtrl * ShuttleGuiBase::TieIntegerTextBox(
    const TranslatableString & Prompt,
-   const SettingSpec< int > &Setting,
+   const IntSetting &Setting,
    const int nChars)
 {
    wxTextCtrl * pText=(wxTextCtrl*)NULL;
@@ -1901,7 +1923,7 @@ wxTextCtrl * ShuttleGuiBase::TieIntegerTextBox(
 /// This one does it for double values...
 wxTextCtrl * ShuttleGuiBase::TieNumericTextBox(
    const TranslatableString & Prompt,
-   const SettingSpec< double > &Setting,
+   const DoubleSetting & Setting,
    const int nChars)
 {
    wxTextCtrl * pText=(wxTextCtrl*)NULL;
@@ -1962,7 +1984,7 @@ wxChoice *ShuttleGuiBase::TieChoice(
 ///                             if null, then use 0, 1, 2, ...
 wxChoice * ShuttleGuiBase::TieNumberAsChoice(
    const TranslatableString &Prompt,
-   const SettingSpec< int > &Setting,
+   const IntSetting & Setting,
    const TranslatableStrings & Choices,
    const std::vector<int> * pInternalChoices,
    int iNoMatchSelector)

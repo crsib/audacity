@@ -26,7 +26,7 @@
 
 *//*******************************************************************/
 
-#include "../Audacity.h" // for USE_* macros
+
 
 #include <wx/defs.h>
 
@@ -980,7 +980,7 @@ mad_flow MP3ImportFileHandle::FilterCB(struct mad_stream const *stream,
    }
 
    // Skip the VBR Scale
-   if (len >= 4 && flags && hasScale)
+   if (len >= 4 && flags & hasScale)
    {
       ptr += 4;
       len -= 4;

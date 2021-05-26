@@ -14,10 +14,10 @@ Provides thread-safe logging based on the wxWidgets log facility.
 *//*******************************************************************/
 
 
-#include "Audacity.h" // This should always be included first
+
 #include "AudacityLogger.h"
 
-#include "Experimental.h"
+
 
 #include "FileNames.h"
 #include "Internat.h"
@@ -78,6 +78,8 @@ AudacityLogger::AudacityLogger()
    mText = NULL;
    mUpdated = false;
 }
+
+AudacityLogger::~AudacityLogger()  = default;
 
 void AudacityLogger::Flush()
 {

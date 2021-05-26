@@ -15,7 +15,7 @@
 
 *//*******************************************************************/
 
-#include "../Audacity.h"
+
 #include "DirectoriesPrefs.h"
 
 #include <math.h>
@@ -36,6 +36,8 @@
 #include "../ShuttleGui.h"
 #include "../TempDirectory.h"
 #include "../widgets/AudacityMessageBox.h"
+#include "../widgets/ReadOnlyText.h"
+#include "../widgets/wxTextCtrlWrapper.h"
 
 using namespace FileNames;
 using namespace TempDirectory;
@@ -120,6 +122,7 @@ enum
    SaveTextID,
    ImportTextID,
    ExportTextID,
+   MacrosTextID,
    TextsEnd,
 
    ButtonsStart = 1020,
@@ -127,6 +130,7 @@ enum
    SaveButtonID,
    ImportButtonID,
    ExportButtonID,
+   MacrosButtonID,
    ButtonsEnd
 };
 
@@ -224,6 +228,15 @@ void DirectoriesPrefs::PopulateOrExchange(ShuttleGui &S)
                                      wxT("")},
                                     30);
          S.Id(ExportButtonID).AddButton(XXO("Bro&wse..."));
+
+         S.Id(MacrosTextID);
+         mMacrosText = S.TieTextBox(XXO("&Macro output:"),
+                                    {PreferenceKey(Operation::MacrosOut, PathType::User),
+                                     wxT("")},
+                                    30);
+         S.Id(MacrosButtonID).AddButton(XXO("Bro&wse..."));
+
+
       }
       S.EndMultiColumn();
    }
@@ -244,10 +257,8 @@ void DirectoriesPrefs::PopulateOrExchange(ShuttleGui &S)
             mTempText->SetValidator(FilesystemValidator(XO("Temporary files directory cannot be on a FAT drive.")));
          S.Id(TempButtonID).AddButton(XXO("Brow&se..."));
 
-         S.AddPrompt(XXO("&Free Space:"));
-         mFreeSpace = S.Style(wxTE_READONLY).AddTextBox({}, wxT(""), 30);
-         if( mFreeSpace )
-            mFreeSpace->SetName(XO("Free Space").Translation());
+         mFreeSpace = S
+            .AddReadOnlyText(XXO("&Free Space:"), "");
       }
       S.EndMultiColumn();
    }

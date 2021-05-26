@@ -6,11 +6,10 @@
  
  *//*******************************************************************/
 
-#include "Audacity.h"
-#include "CrashReport.h"
-#include "Experimental.h"
 
-#if defined(EXPERIMENTAL_CRASH_REPORT)
+#include "CrashReport.h"
+
+#if defined(HAS_CRASH_REPORT)
 #include <atomic>
 #include <thread>
 

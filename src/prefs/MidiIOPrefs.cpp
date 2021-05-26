@@ -23,10 +23,8 @@ other settings.
 
 *//********************************************************************/
 
-#include "../Audacity.h"
-#include "MidiIOPrefs.h"
 
-#include "../Experimental.h"
+#include "MidiIOPrefs.h"
 
 #ifdef EXPERIMENTAL_MIDI_OUT
 

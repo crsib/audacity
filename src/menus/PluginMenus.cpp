@@ -1,5 +1,4 @@
-#include "../Audacity.h"
-#include "../Experimental.h"
+
 
 #include "../AudioIO.h"
 #include "../BatchProcessDialog.h"
@@ -317,7 +316,7 @@ MenuTable::BaseItemPtrs PopulateEffectsMenu(
          && (plug->GetSymbol() !=
                ComponentInterfaceSymbol("Nyquist Effects Prompt"))
          && (plug->GetSymbol() != ComponentInterfaceSymbol("Nyquist Tools Prompt"))
-         && (plug->GetSymbol() != ComponentInterfaceSymbol("Nyquist Prompt"))
+         && (plug->GetSymbol() != ComponentInterfaceSymbol(NYQUIST_PROMPT_ID))
 #endif
          )
          defplugs.push_back(plug);

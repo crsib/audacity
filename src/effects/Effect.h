@@ -12,9 +12,7 @@
 #ifndef __AUDACITY_EFFECT__
 #define __AUDACITY_EFFECT__
 
-#include "../Audacity.h"
 
-#include "../Experimental.h"
 
 #include <functional>
 #include <set>
@@ -59,7 +57,6 @@ class WaveTrack;
  name into another alphabet.  */
 #define NYQUISTEFFECTS_FAMILY ( EffectFamilySymbol{ XO("Nyquist") } )
 
-#define NYQUIST_PROMPT_ID wxT("Nyquist Prompt")
 #define NYQUIST_WORKER_ID wxT("Nyquist Worker")
 
 // TODO:  Apr-06-2015
@@ -378,7 +375,7 @@ protected:
 
    // For the use of analyzers, which don't need to make output wave tracks,
    // but may need to add label tracks.
-   class AddedAnalysisTrack {
+   class AUDACITY_DLL_API AddedAnalysisTrack {
       friend Effect;
       AddedAnalysisTrack(Effect *pEffect, const wxString &name);
       AddedAnalysisTrack(const AddedAnalysisTrack&) PROHIBITED;
@@ -408,7 +405,7 @@ protected:
 
    // For the use of analyzers, which don't need to make output wave tracks,
    // but may need to modify label tracks.
-   class ModifiedAnalysisTrack {
+   class AUDACITY_DLL_API ModifiedAnalysisTrack {
       friend Effect;
       ModifiedAnalysisTrack
          (Effect *pEffect, const LabelTrack *pOrigTrack, const wxString &name);

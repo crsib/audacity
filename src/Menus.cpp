@@ -25,10 +25,10 @@
 
 *//*******************************************************************/
 
-#include "Audacity.h" // for USE_* macros
+
 #include "Menus.h"
 
-#include "Experimental.h"
+
 
 #include <wx/frame.h>
 

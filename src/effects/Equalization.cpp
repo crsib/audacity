@@ -52,11 +52,9 @@
 *//*******************************************************************/
 
 
-#include "../Audacity.h"
+
 #include "Equalization.h"
 #include "LoadEffects.h"
-
-#include "../Experimental.h"
 
 #include <math.h>
 #include <vector>
@@ -1145,9 +1143,14 @@ void EffectEqualization::PopulateOrExchange(ShuttleGui & S)
    if( mOptions != kEqOptionGraphic)
       mUIParent->Layout();
 
+   if( mOptions == kEqOptionCurve)
+      mDrawMode = true;
+   if( mOptions == kEqOptionGraphic)
+      mDrawMode = false;
+
    // "show" settings for graphics mode before setting the size of the dialog
    // as this needs more space than draw mode
-   szrV->Show(szrG,true);  // eq sliders
+   szrV->Show(szrG,!mDrawMode);  // eq sliders
    szrH->Show(szrI,true);  // interpolation choice
    szrH->Show(szrL,false); // linear freq checkbox
 
@@ -1160,7 +1163,14 @@ void EffectEqualization::PopulateOrExchange(ShuttleGui & S)
    else{
       mPanel->Show( true );
       szrV->Show(szr1, true);
-      mUIParent->SetMinSize(mUIParent->GetBestSize());
+      // This sizing calculation is hacky.
+      // Rather than set the true minimum size we set a size we would 
+      // like to have.
+      // This makes the default size of the dialog good, but has the 
+      // downside that the user can't adjust the dialog smaller.
+      wxSize sz = szrV->GetMinSize();
+      sz += wxSize( 400, 100);
+      szrV->SetMinSize(sz);
    }
    ForceRecalc();
 

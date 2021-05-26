@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: audacity 3.0.1\n"
 "Report-Msgid-Bugs-To: audacity-translation@lists.sourceforge.net\n"
 "POT-Creation-Date: 2021-03-31 12:57+0100\n"
-"PO-Revision-Date: 2021-02-10 14:57+0000\n"
+"PO-Revision-Date: 2021-04-04 01:33+0100\n"
 "Last-Translator: Bruno Ramalhete <bram.512@gmail.com>\n"
 "Language-Team: Bruno Ramalhete <bram.512@gmail.com>\n"
 "Language: pt_PT\n"
@@ -470,7 +470,7 @@ msgid ""
 "Windows, Mac, and GNU/Linux (and other Unix-like systems)."
 msgstr ""
 "%s é um programa gratuito escrito por uma equipa mundial de %s. %s é %s para "
-"Windows, Mac e GNU/Linux (e outros sistemas semelhantes ao Unix)."
+"Windows, Mac, e GNU/Linux (e outros sistemas semelhantes ao Unix)."
 
 #. i18n-hint: substitutes into "a worldwide team of %s"
 #: src/AboutDialog.cpp
@@ -596,9 +596,9 @@ msgstr "%s website: "
 #. i18n-hint Audacity's name substitutes for first and third %s,
 #. and a "copyright" symbol for the second
 #: src/AboutDialog.cpp
-#, fuzzy, c-format
+#, c-format
 msgid "%s software is copyright %s 1999-2021 %s Team."
-msgstr "%s software is copyright %s 1999-2020 %s Team."
+msgstr "%s software is copyright %s 1999-2021 %s Team."
 
 #. i18n-hint Audacity's name substitutes for %s
 #: src/AboutDialog.cpp
@@ -621,9 +621,8 @@ msgstr "Desligado"
 
 #. i18n-hint: Information about when audacity was compiled follows
 #: src/AboutDialog.cpp
-#, fuzzy
 msgid "The Build"
-msgstr "Depurar compilação"
+msgstr "A Compilação"
 
 #: src/AboutDialog.cpp
 msgid "Program build date:"
@@ -876,7 +875,7 @@ msgstr "Erro"
 #: src/AudacityApp.cpp
 #, c-format
 msgid "Failed to remove %s"
-msgstr "Não é possível apagar %s"
+msgstr "Falha ao remover %s"
 
 #: src/AudacityApp.cpp
 msgid "Failed!"
@@ -959,8 +958,7 @@ msgstr ""
 "temporários. \n"
 "O Audacity precisa de um sítio onde programas de limpeza não eliminem os "
 "ficheiros temporários.\n"
-"Por favor, indique um diretório apropriado na caixa de diálogos "
-"\"Preferências\"."
+"Por favor, indique um diretório apropriado na caixa de diálogos Preferências."
 
 #: src/AudacityApp.cpp
 msgid ""
@@ -969,8 +967,7 @@ msgid ""
 msgstr ""
 "O Audacity não conseguiu encontrar um sítio para guardar os ficheiros "
 "temporários. \n"
-"Por favor, indique um diretório apropriado na caixa de diálogos "
-"\"Preferências\"."
+"Por favor, indique um diretório apropriado na caixa de diálogos Preferências."
 
 #: src/AudacityApp.cpp
 msgid ""
@@ -2084,14 +2081,14 @@ msgid ""
 "change\n"
 "and use %s to change that audio."
 msgstr ""
-"Selecione o áudio para %s a ser usado.\n"
+"Selecione o áudio para %s a utilizar.\n"
 "\n"
-"1. Selecione o áudio que representa o ruído e use %s para obter o seu "
-"\"perfil de ruído\".\n"
+"1. Selecione o áudio que representa o ruído e utilize %s para obter o seu "
+"'perfil de ruído'.\n"
 "\n"
-"2. quando você tem o seu perfil de ruído, selecione o áudio que você deseja "
+"2. quando tiver o seu perfil de ruído, selecione o áudio que pretende "
 "alterar\n"
-"e use %s para alterar esse áudio."
+"e utilize %s para alterar esse áudio."
 
 #: src/CommonCommandFlags.cpp
 msgid ""
@@ -2182,7 +2179,7 @@ msgstr "Erro de base de dados.  Desculpe, mas não temos mais detalhes."
 
 #: src/Dependencies.cpp
 msgid "Removing Dependencies"
-msgstr "A Apagar Dependências"
+msgstr "A Remover Dependências"
 
 #: src/Dependencies.cpp
 msgid "Copying audio data into project..."
@@ -2197,7 +2194,7 @@ msgid ""
 "Copying these files into your project will remove this dependency.\n"
 "This is safer, but needs more disk space."
 msgstr ""
-"Copiar estes ficheiros para o seu projeto irá apagar esta dependência.\n"
+"Copiar estes ficheiros para o seu projeto irá remover esta dependência.\n"
 "É mais seguro, mas requer mais espaço em disco."
 
 #: src/Dependencies.cpp
@@ -3192,7 +3189,7 @@ msgstr "Sistema"
 
 #: src/Legacy.cpp
 msgid "Error Converting Legacy Project File"
-msgstr "Erro ao Guardar Ficheiro de Projeto"
+msgstr "Erro ao Converter Ficheiro de Projeto Legado"
 
 #: src/Legacy.cpp
 #, c-format
@@ -3376,7 +3373,7 @@ msgid ""
 "\n"
 "It will not be loaded."
 msgstr ""
-"O módulo %s falhou ao inicializar.\n"
+"O módulo \"%s\" falhou ao inicializar.\n"
 "\n"
 "Ele não será carregado."
 
@@ -3882,7 +3879,7 @@ msgstr "Fechar projeto imediatamente sem mais alterações"
 
 #: src/ProjectFSCK.cpp
 msgid "Warning - Missing Alias Summary File(s)"
-msgstr "Aviso - Sumário do ficheiro de áudio externo não encontrado"
+msgstr "Aviso - Ficheiro(s) de Resumo de Alias Ausente(s)"
 
 #: src/ProjectFSCK.cpp
 #, c-format
@@ -3942,7 +3939,7 @@ msgstr "Continuar sem apagar; ignorar os ficheiros extra durante esta sessão"
 
 #: src/ProjectFSCK.cpp
 msgid "Delete orphan files (permanent immediately)"
-msgstr "Apagar ficheiros orfãos (permanente e imediato)"
+msgstr "Apagar ficheiros órfãos (permanente e imediato)"
 
 #: src/ProjectFSCK.cpp
 msgid "Warning - Orphan Block File(s)"
@@ -3988,12 +3985,15 @@ msgid "Failed to open the project's database"
 msgstr "Falha ao abrir a base de dados do projeto"
 
 #: src/ProjectFileIO.cpp
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Failed to open database file:\n"
 "\n"
 "%s"
-msgstr "Falhou ao abrir %s"
+msgstr ""
+"Falha ao abrir ficheiro base de dados:\n"
+"\n"
+"%s"
 
 #: src/ProjectFileIO.cpp
 msgid "Failed to discard connection"
@@ -4010,7 +4010,7 @@ msgid ""
 "\n"
 "%s"
 msgstr ""
-"Falha ao executar o comando de ficheiro de projeto:\n"
+"Falha ao executar o comando de um ficheiro projeto:\n"
 "\n"
 "%s"
 
@@ -4021,7 +4021,7 @@ msgid ""
 "\n"
 "%s"
 msgstr ""
-"Incapaz de preparar o comando de ficheiro de projeto:\n"
+"Incapaz de preparar o comando de um ficheiro projeto:\n"
 "\n"
 "%s"
 
@@ -4044,6 +4044,8 @@ msgid ""
 "Project is in a read only directory\n"
 "(Unable to create the required temporary files)"
 msgstr ""
+"O projeto está num diretório apenas de leitura\n"
+"(Impossível criar os ficheiros temporários necessários)"
 
 #: src/ProjectFileIO.cpp
 msgid "This is not an Audacity project file"
@@ -4066,7 +4068,7 @@ msgstr "Não foi possível iniciar o ficheiro de projeto"
 #. i18n-hint: An error message.  Don't translate inset or blockids.
 #: src/ProjectFileIO.cpp
 msgid "Unable to add 'inset' function (can't verify blockids)"
-msgstr ""
+msgstr "Impossível adicionar a função 'inset' (não pode verificar blockids)"
 
 #. i18n-hint: An error message.  Don't translate blockfiles.
 #: src/ProjectFileIO.cpp
@@ -4074,6 +4076,8 @@ msgid ""
 "Project is read only\n"
 "(Unable to work with the blockfiles)"
 msgstr ""
+"Projeto é apenas de leitura\n"
+"(Impossível trabalhar com os blockfiles)"
 
 #. i18n-hint: An error message.  Don't translate blockfiles.
 #: src/ProjectFileIO.cpp
@@ -4081,6 +4085,8 @@ msgid ""
 "Project is locked\n"
 "(Unable to work with the blockfiles)"
 msgstr ""
+"Projeto está bloqueado\n"
+"(Impossível trabalhar com os blockfiles)"
 
 #. i18n-hint: An error message.  Don't translate blockfiles.
 #: src/ProjectFileIO.cpp
@@ -4088,6 +4094,8 @@ msgid ""
 "Project is busy\n"
 "(Unable to work with the blockfiles)"
 msgstr ""
+"Projeto está ocupado\n"
+"(Impossível trabalhar com os blockfiles)"
 
 #. i18n-hint: An error message.  Don't translate blockfiles.
 #: src/ProjectFileIO.cpp
@@ -4095,6 +4103,8 @@ msgid ""
 "Project is corrupt\n"
 "(Unable to work with the blockfiles)"
 msgstr ""
+"Projeto está corrompido\n"
+"(Impossível trabalhar com os blockfiles)"
 
 #. i18n-hint: An error message.  Don't translate blockfiles.
 #: src/ProjectFileIO.cpp
@@ -4102,6 +4112,8 @@ msgid ""
 "Some permissions issue\n"
 "(Unable to work with the blockfiles)"
 msgstr ""
+"Algum erro de permissões\n"
+"(Impossível trabalhar com os blockfiles)"
 
 #. i18n-hint: An error message.  Don't translate blockfiles.
 #: src/ProjectFileIO.cpp
@@ -4109,6 +4121,8 @@ msgid ""
 "A disk I/O error\n"
 "(Unable to work with the blockfiles)"
 msgstr ""
+"Um erro I/O de disco\n"
+"(Impossível trabalhar com os blockfiles)"
 
 #. i18n-hint: An error message.  Don't translate blockfiles.
 #: src/ProjectFileIO.cpp
@@ -4116,12 +4130,13 @@ msgid ""
 "Not authorized\n"
 "(Unable to work with the blockfiles)"
 msgstr ""
+"Não autorizado\n"
+"(Impossível trabalhar com os blockfiles)"
 
 #. i18n-hint: An error message.  Don't translate blockfiles.
 #: src/ProjectFileIO.cpp
-#, fuzzy
 msgid "Unable to work with the blockfiles"
-msgstr "Não foi possível iniciar o ficheiro de projeto"
+msgstr "Impossível trabalhar com os blockfiles"
 
 #: src/ProjectFileIO.cpp
 #, c-format
@@ -4933,7 +4948,7 @@ msgstr ""
 
 #: src/Sequence.cpp
 msgid "Warning - Truncating Overlong Block File"
-msgstr "Aviso - Truncando Ficheiro de Bloco Superlongo"
+msgstr "Aviso - Truncando Ficheiro de Bloco Demasiado Longo"
 
 #: src/ShuttleGui.cpp src/effects/EffectUI.cpp
 msgid "&Preview"
@@ -4980,9 +4995,8 @@ msgid "Don't show this again at start up"
 msgstr "Não mostrar novamente ao iniciar"
 
 #: src/SqliteSampleBlock.cpp
-#, fuzzy
 msgid "Connection to project file is null"
-msgstr "A inspecionar os dados do ficheiro do projeto"
+msgstr "A ligação ao ficheiro projeto é nula"
 
 #: src/Tags.cpp
 msgid "Artist Name"
@@ -5030,7 +5044,7 @@ msgstr "&Adicionar"
 
 #: src/Tags.cpp
 msgid "&Remove"
-msgstr "&Apagar"
+msgstr "&Remover"
 
 #: src/Tags.cpp
 msgid "Genres"
@@ -5253,7 +5267,7 @@ msgstr "Clássico"
 #. i18n-hint: Light meaning opposite of dark
 #: src/Theme.cpp
 msgid "Light"
-msgstr "Ligeiro"
+msgstr "Claro"
 
 #: src/Theme.cpp
 msgid "Dark"
@@ -5675,7 +5689,7 @@ msgstr "Apagadas as faixas de áudio"
 
 #: src/TrackUtilities.cpp
 msgid "Remove Track"
-msgstr "Apagar Faixa"
+msgstr "Remover Faixa"
 
 #: src/TrackUtilities.cpp
 #, c-format
@@ -5684,7 +5698,7 @@ msgstr "Faixa apagada '%s.'"
 
 #: src/TrackUtilities.cpp
 msgid "Track Remove"
-msgstr "Apagar Faixa"
+msgstr "Remover Faixa"
 
 #. i18n-hint: Past tense of 'to move', as in 'moved audio track up'.
 #: src/TrackUtilities.cpp
@@ -5889,7 +5903,7 @@ msgstr "Atraso (segundos):"
 # decay=decaimento
 #: src/commands/Demo.cpp
 msgid "Decay factor:"
-msgstr "Factor de perda:"
+msgstr "Fator de decaimento:"
 
 #: src/commands/Demo.h
 msgid "Does the demo action."
@@ -6334,7 +6348,7 @@ msgstr "Adicionar"
 #: src/commands/SelectCommand.cpp src/effects/EffectUI.cpp
 #: src/tracks/playabletrack/wavetrack/ui/CutlineHandle.cpp
 msgid "Remove"
-msgstr "Apagar"
+msgstr "Remover"
 
 #: src/commands/SelectCommand.cpp
 msgid "First Track:"
@@ -6414,7 +6428,7 @@ msgstr "Apagar"
 
 #: src/commands/SetEnvelopeCommand.h
 msgid "Sets an envelope point position."
-msgstr "Define uma posição do ponto de envelope."
+msgstr "Define uma posição do ponto do envelope."
 
 #: src/commands/SetLabelCommand.cpp
 msgid "Set Label"
@@ -6513,7 +6527,7 @@ msgstr "Linear"
 
 #: src/commands/SetTrackInfoCommand.cpp
 msgid "Reset"
-msgstr "Restabelecer"
+msgstr "Redefinir"
 
 #: src/commands/SetTrackInfoCommand.cpp
 msgid "Times 2"
@@ -6671,7 +6685,7 @@ msgstr "Graves e Agudos"
 
 #: src/effects/BassTreble.cpp
 msgid "Simple tone control effect"
-msgstr "Tons simples de controlo de efeito"
+msgstr "Efeito de controlo de tom simples"
 
 #: src/effects/BassTreble.cpp
 msgid "Tone controls"
@@ -6995,7 +7009,7 @@ msgstr "Limite"
 
 #: src/effects/ClickRemoval.cpp
 msgid "Max &Spike Width (higher is more sensitive):"
-msgstr "Largura Máx. do &Pico (quanto maior, mais sensível):"
+msgstr "Largura Máx. do &Pico (mais alto é mais sensível):"
 
 #: src/effects/ClickRemoval.cpp
 msgid "Max Spike Width"
@@ -7051,11 +7065,11 @@ msgstr "Rácio: %.1f para 1"
 
 #: src/effects/Compressor.cpp
 msgid "&Noise Floor:"
-msgstr "Limite &Base do Ruído:"
+msgstr "&Noise Floor:"
 
 #: src/effects/Compressor.cpp src/effects/Distortion.cpp
 msgid "Noise Floor"
-msgstr "Limite Base do Ruído"
+msgstr "Noise Floor"
 
 #: src/effects/Compressor.cpp
 msgid "&Ratio:"
@@ -7112,7 +7126,7 @@ msgstr "Limite %d dB"
 #: src/effects/Compressor.cpp
 #, c-format
 msgid "Noise Floor %d dB"
-msgstr "Piso de Ruído %d dB"
+msgstr "Noise Floor %d dB"
 
 #: src/effects/Compressor.cpp
 #, c-format
@@ -7459,7 +7473,7 @@ msgstr "Sustento Blues"
 
 #: src/effects/Distortion.cpp
 msgid "Light Crunch Overdrive"
-msgstr "Sobre-corrente Leve"
+msgstr "Light Crunch Overdrive"
 
 #: src/effects/Distortion.cpp
 msgid "Heavy Overdrive"
@@ -7483,35 +7497,35 @@ msgstr "Distorção de Expansão Cerrada"
 
 #: src/effects/Distortion.cpp
 msgid "Leveller, Light, -70dB noise floor"
-msgstr "Nivelador, Leve, -70dB piso de ruído"
+msgstr "Nivelador, Leve, -70dB noise floor"
 
 #: src/effects/Distortion.cpp
 msgid "Leveller, Moderate, -70dB noise floor"
-msgstr "Nivelador, Moderado, -70dB piso de ruído"
+msgstr "Nivelador, Moderado, -70dB noise floor"
 
 #: src/effects/Distortion.cpp
 msgid "Leveller, Heavy, -70dB noise floor"
-msgstr "Nivelador, Pesado, -70dB piso de ruído"
+msgstr "Nivelador, Pesado, -70dB noise floor"
 
 #: src/effects/Distortion.cpp
 msgid "Leveller, Heavier, -70dB noise floor"
-msgstr "Nivelador, Forte, -70dB piso de ruído"
+msgstr "Nivelador, Mais Pesado, -70dB noise floor"
 
 #: src/effects/Distortion.cpp
 msgid "Leveller, Heaviest, -70dB noise floor"
-msgstr "Nivelador, Carregado, -70dB piso de ruído"
+msgstr "Nivelador, Muito Pesado, -70dB noise floor"
 
 #: src/effects/Distortion.cpp
 msgid "Half-wave Rectifier"
-msgstr "Rectificador de Meia-onda"
+msgstr "Retificador de Meia-onda"
 
 #: src/effects/Distortion.cpp
 msgid "Full-wave Rectifier"
-msgstr "Rectificador de Onda-cheia"
+msgstr "Retificador de Onda-completa"
 
 #: src/effects/Distortion.cpp
 msgid "Full-wave Rectifier (DC blocked)"
-msgstr "Rectificador de Onda-Cheia (DC bloqueado)"
+msgstr "Retificador de Onda-completa (DC bloqueado)"
 
 #: src/effects/Distortion.cpp
 msgid "Percussion Limiter"
@@ -7724,7 +7738,7 @@ msgstr "&Atraso (segundos):"
 # decay=decaimento
 #: src/effects/Echo.cpp
 msgid "D&ecay factor:"
-msgstr "Fator de p&erda:"
+msgstr "Fator de d&ecaimento:"
 
 #: src/effects/Effect.cpp
 msgid "Built-in"
@@ -7751,7 +7765,7 @@ msgstr "Erro ao Guardar Predefinições de Efeitos"
 #: src/effects/Effect.cpp src/effects/VST/VSTEffect.cpp
 #, c-format
 msgid "Error writing to file: \"%s\""
-msgstr "Erro ao Escrever para o Ficheiro: \"%s\""
+msgstr "Erro ao escrever para o ficheiro: \"%s\""
 
 #: src/effects/Effect.cpp
 msgid "Import Effect Parameters"
@@ -7761,7 +7775,7 @@ msgstr "Importar Parâmetros de Efeitos"
 #: src/effects/Effect.cpp
 #, c-format
 msgid "%s: is not a valid presets file.\n"
-msgstr "\"%s\" não é um ficheiro predefinições válido.\n"
+msgstr "%s: não é um ficheiro de presets válido.\n"
 
 #. i18n-hint %s will be replaced by a file name
 #: src/effects/Effect.cpp
@@ -8901,7 +8915,7 @@ msgid ""
 "filtered out, and then click 'OK' to remove noise.\n"
 msgstr ""
 "Selecione todo o áudio que quer filtrado, escolha quanto de ruído quer\n"
-"filtrar, e prima 'OK' para apagar o ruído.\n"
+"filtrar, e prima 'OK' para remover o ruído.\n"
 
 #: src/effects/NoiseRemoval.cpp
 msgid "Noise re&duction (dB):"
@@ -9009,7 +9023,7 @@ msgstr ""
 #.
 #: src/effects/Paulstretch.cpp
 msgid "&Stretch Factor:"
-msgstr "Factor da &Extensão:"
+msgstr "Fator da &Extensão:"
 
 #: src/effects/Paulstretch.cpp
 msgid "&Time Resolution (seconds):"
@@ -9203,11 +9217,11 @@ msgstr "Casa de Banho"
 
 #: src/effects/Reverb.cpp
 msgid "Small Room Bright"
-msgstr "Brilho de Sala Pequena"
+msgstr "Sala Pequena Brilhante"
 
 #: src/effects/Reverb.cpp
 msgid "Small Room Dark"
-msgstr "Sombra de Sala Pequena"
+msgstr "Sala Pequena Escura"
 
 #: src/effects/Reverb.cpp
 msgid "Medium Room"
@@ -9215,7 +9229,7 @@ msgstr "Sala Média"
 
 #: src/effects/Reverb.cpp
 msgid "Large Room"
-msgstr "Grande Sala"
+msgstr "Sala Grande"
 
 #: src/effects/Reverb.cpp
 msgid "Church Hall"
@@ -9227,11 +9241,11 @@ msgstr "Catedral"
 
 #: src/effects/Reverb.cpp
 msgid "Reverb"
-msgstr "Reverberador"
+msgstr "Ressonância"
 
 #: src/effects/Reverb.cpp
 msgid "Adds ambience or a \"hall effect\""
-msgstr "Adiciona amiente ou um \"efeito de sala\""
+msgstr "Adiciona ambiente ou um \"efeito de sala\""
 
 #: src/effects/Reverb.cpp
 msgid "&Room Size (%):"
@@ -9243,7 +9257,7 @@ msgstr "&Pré-atraso (ms):"
 
 #: src/effects/Reverb.cpp
 msgid "Rever&berance (%):"
-msgstr "Rever&beração (%):"
+msgstr "Resso&nância (%):"
 
 #: src/effects/Reverb.cpp
 msgid "Da&mping (%):"
@@ -9276,7 +9290,7 @@ msgstr "&Apenas Húmido"
 #: src/effects/Reverb.cpp
 #, c-format
 msgid "Reverb: %s"
-msgstr "Reverberar: %s"
+msgstr "Ressonância: %s"
 
 #: src/effects/Reverse.cpp
 msgid "Reverse"
@@ -9307,11 +9321,11 @@ msgstr "Chebyshev Tipo II"
 
 #: src/effects/ScienFilter.cpp
 msgid "Lowpass"
-msgstr "Passa Baixa"
+msgstr "Passa-baixo"
 
 #: src/effects/ScienFilter.cpp
 msgid "Highpass"
-msgstr "Passa Alta"
+msgstr "Passa-alto"
 
 #: src/effects/ScienFilter.cpp
 msgid "Classic Filters"
@@ -9339,11 +9353,11 @@ msgstr "O&rdem:"
 
 #: src/effects/ScienFilter.cpp
 msgid "&Passband Ripple:"
-msgstr "Ondulação da Banda que &Passa:"
+msgstr "Ondulação da Banda &Passante:"
 
 #: src/effects/ScienFilter.cpp
 msgid "Passband Ripple (dB)"
-msgstr "Ondulação da Banda (dB)"
+msgstr "Ondulação da Banda Passante (dB)"
 
 #: src/effects/ScienFilter.cpp
 msgid "&Subtype:"
@@ -9546,7 +9560,7 @@ msgstr "Quadrado, sem gradações"
 
 #: src/effects/ToneGen.cpp
 msgid "Chirp"
-msgstr "Trilo"
+msgstr "Chilro"
 
 #: src/effects/ToneGen.cpp
 msgid "Tone"
@@ -11078,7 +11092,7 @@ msgid ""
 msgstr ""
 "Etiqueta do codec (FOURCC)\n"
 "Opcional \n"
-"em branco - automático"
+"vazio - automático"
 
 #: src/export/ExportFFmpegDialogs.cpp
 msgid "Tag:"
@@ -13141,7 +13155,7 @@ msgstr "&Duplicar"
 
 #: src/menus/EditMenus.cpp
 msgid "R&emove Special"
-msgstr "Apagar &Especial"
+msgstr "R&emover Especial"
 
 #. i18n-hint: (verb) Do a special kind of cut
 #: src/menus/EditMenus.cpp
@@ -14317,7 +14331,7 @@ msgstr "Fim ao Fim da &Seleção"
 #. an implied preposition "from").
 #: src/menus/TrackMenus.cpp
 msgid "Aligned/Moved start to zero"
-msgstr "Alinhado/Movido iniciar ao zero"
+msgstr "Alinhado/Movido iniciar a zero"
 
 #: src/menus/TrackMenus.cpp
 msgid "Aligned start to zero"
@@ -15571,7 +15585,7 @@ msgstr "Utilizar mais layouts Left-to-Right em idiomas RTL"
 
 #: src/prefs/GUIPrefs.cpp
 msgid "Never use comma as decimal point"
-msgstr ""
+msgstr "Nunca use vírgula como ponto decimal"
 
 #: src/prefs/GUIPrefs.cpp
 msgid "Show Timeline Tooltips"
@@ -16378,7 +16392,7 @@ msgstr "Nomear novas faixas gravadas"
 #. i18n-hint: end of two-part phrase, "Name newly recorded tracks with:"
 #: src/prefs/RecordingPrefs.cpp
 msgid "With:"
-msgstr "Entre:"
+msgstr "Com:"
 
 #: src/prefs/RecordingPrefs.cpp
 msgid "Custom Track &Name"
@@ -19766,11 +19780,11 @@ msgstr "Ligação estéreo"
 
 #: plug-ins/noisegate.ny
 msgid "Link Stereo Tracks"
-msgstr "Ligar Faixas Stereo"
+msgstr "Ligar Faixas Estéreo"
 
 #: plug-ins/noisegate.ny
 msgid "Don't Link Stereo"
-msgstr "Não Ligar Stereo"
+msgstr "Não Ligar Estéreo"
 
 #: plug-ins/noisegate.ny
 msgid "Gate threshold (dB)"
@@ -19961,7 +19975,7 @@ msgstr "Erro.~%Nenhum ficheiro selecionado."
 
 #: plug-ins/pluck.ny
 msgid "Pluck"
-msgstr "Arranca"
+msgstr "Pluck"
 
 #: plug-ins/pluck.ny
 msgid "Generating pluck sound..."
@@ -19969,7 +19983,7 @@ msgstr "A gerar som pluck…"
 
 #: plug-ins/pluck.ny
 msgid "MIDI values for C notes: 36, 48, 60 [middle C], 72, 84, 96."
-msgstr "Valores MIDO para notas C: 36, 48, 60 [meio C], 72, 84, 96."
+msgstr "Valores MIDI para notas C: 36, 48, 60 [meio C], 72, 84, 96."
 
 #: plug-ins/pluck.ny
 msgid "David R.Sky"
@@ -20655,7 +20669,8 @@ msgid ""
 "reverb."
 msgstr ""
 " - Um valor ideal para Estéreo.\n"
-"                Contudo, a extração do centro depende também do reverb usado."
+"                Contudo, a extração do centro depende também da ressonância "
+"utilizada."
 
 #: plug-ins/vocalrediso.ny
 msgid ""

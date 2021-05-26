@@ -13,19 +13,16 @@
 #ifndef __AUDACITY_AUDIO_IO__
 #define __AUDACITY_AUDIO_IO__
 
-#include "Audacity.h" // for USE_* macros
+
 
 #include "AudioIOBase.h" // to inherit
+#include "PlaybackSchedule.h" // member variable
 
-#include "Experimental.h"
+
 
 #include <memory>
 #include <utility>
 #include <wx/atomic.h> // member variable
-
-#ifdef USE_MIDI
-
-// TODO: Put the relative paths into automake.
 
 #ifdef EXPERIMENTAL_MIDI_OUT
 typedef void PmStream;
@@ -40,8 +37,6 @@ using NoteTrackArray = std::vector < std::shared_ptr< NoteTrack > >;
 using NoteTrackConstArray = std::vector < std::shared_ptr< const NoteTrack > >;
 
 #endif // EXPERIMENTAL_MIDI_OUT
-
-#endif // USE_MIDI
 
 #include <wx/event.h> // to declare custom event types
 
@@ -582,6 +577,7 @@ protected:
       double Consumer( size_t nSamples, double rate );
    } mTimeQueue;
 
+   PlaybackSchedule mPlaybackSchedule;
 };
 
 class AUDACITY_DLL_API AudioIO final
@@ -720,6 +716,14 @@ public:
    * capturing is true if the stream is capturing one or more audio channels,
    * and playing is true if one or more channels are being played. */
    double GetBestRate(bool capturing, bool playing, double sampleRate);
+
+   /** \brief During playback, the track time most recently played
+    *
+    * When playing looped, this will start from t0 again,
+    * too. So the returned time should be always between
+    * t0 and t1
+    */
+   double GetStreamTime();
 
    friend class AudioThread;
 #ifdef EXPERIMENTAL_MIDI_OUT

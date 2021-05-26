@@ -13,6 +13,7 @@
 
 #include "PrefsPanel.h"
 
+class ReadOnlyText;
 class ShuttleGui;
 
 class wxStaticText;
@@ -42,12 +43,13 @@ class DirectoriesPrefs final : public PrefsPanel
    void OnBrowse(wxCommandEvent &evt);
    void OnText(wxCommandEvent &evt);
 
-   wxTextCtrl *mFreeSpace;
+   ReadOnlyText *mFreeSpace;
    wxTextCtrl *mTempText;
    wxTextCtrl *mOpenText;
    wxTextCtrl *mSaveText;
    wxTextCtrl *mImportText;
    wxTextCtrl *mExportText;
+   wxTextCtrl *mMacrosText;
 
    DECLARE_EVENT_TABLE()
 };

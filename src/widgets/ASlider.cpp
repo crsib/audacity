@@ -29,10 +29,8 @@ or ASlider.
 *//*******************************************************************/
 
 
-#include "../Audacity.h"
-#include "ASlider.h"
 
-#include "../Experimental.h"
+#include "ASlider.h"
 
 #include <math.h>
 
@@ -70,7 +68,7 @@ or ASlider.
 #if wxUSE_ACCESSIBILITY
 #include "WindowAccessible.h"
 
-class ASliderAx final : public WindowAccessible
+class AUDACITY_DLL_API ASliderAx final : public WindowAccessible
 {
 public:
    ASliderAx(wxWindow * window);
@@ -1532,6 +1530,15 @@ void LWSlider::Refresh()
       mParent->Refresh(false);
 }
 
+void LWSlider::Redraw()
+{
+   mBitmap.reset();
+   mThumbBitmap.reset();
+   mThumbBitmapHilited.reset();
+
+   Refresh();
+}
+
 bool LWSlider::GetEnabled() const
 {
    return mEnabled;
@@ -1614,6 +1621,18 @@ ASlider::~ASlider()
 {
    if(HasCapture())
       ReleaseMouse();
+}
+
+bool ASlider::SetBackgroundColour(const wxColour& colour)
+{
+   auto res = wxPanel::SetBackgroundColour(colour);
+
+   if (res && mLWSlider)
+   {
+      mLWSlider->Redraw();
+   }
+
+   return res;
 }
 
 void ASlider::OnSlider(wxCommandEvent &event)

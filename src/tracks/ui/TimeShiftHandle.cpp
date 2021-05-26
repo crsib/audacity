@@ -8,10 +8,8 @@ Paul Licameli split from TrackPanel.cpp
 
 **********************************************************************/
 
-#include "../../Audacity.h" // for USE_* macros
-#include "TimeShiftHandle.h"
 
-#include "../../Experimental.h"
+#include "TimeShiftHandle.h"
 
 #include "TrackView.h"
 #include "../../AColor.h"
@@ -112,6 +110,8 @@ void ClipMoveState::DoHorizontalOffset( double offset )
          channel->Offset( offset );
    }
 }
+
+TrackShifter::TrackShifter() = default;
 
 TrackShifter::~TrackShifter() = default;
 

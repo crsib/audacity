@@ -59,10 +59,10 @@ can't be.
 
 *//*****************************************************************/
 
-#include "Audacity.h"
+
 #include "Theme.h"
 
-#include "Experimental.h"
+
 
 #include <wx/wxprec.h>
 #include <wx/dcclient.h>

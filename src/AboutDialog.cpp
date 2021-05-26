@@ -25,10 +25,10 @@ hold information about one contributor to Audacity.
 *//********************************************************************/
 
 
-#include "Audacity.h" // for USE_* macros
+
 #include "AboutDialog.h"
 
-#include "Experimental.h"
+
 
 #include <wx/dialog.h>
 #include <wx/html/htmlwin.h>
@@ -62,7 +62,7 @@ hold information about one contributor to Audacity.
 // RevisionIdent.h may contain #defines like these ones:
 //#define REV_LONG "28864acb238cb3ca71dda190a2d93242591dd80e"
 //#define REV_TIME "Sun Apr 12 12:40:22 2015 +0100"
-#include <RevisionIdent.h>
+#include "RevisionIdent.h"
 
 #ifndef REV_TIME
 #define REV_TIME "unknown date and time"
@@ -90,9 +90,15 @@ void AboutDialog::CreateCreditsList()
    const auto developerFormat =
    /* i18n-hint: For "About Audacity..." credits, substituting a person's proper name */
       XO("%s, developer");
+   const auto developerAndSupprtFormat =
+   /* i18n-hint: For "About Audacity..." credits, substituting a person's proper name */
+      XO("%s, developer and support");
    const auto documentationAndSupportFormat =
    /* i18n-hint: For "About Audacity..." credits, substituting a person's proper name */
       XO("%s, documentation and support");
+   const auto qaDocumentationAndSupportFormat =
+   /* i18n-hint: For "About Audacity..." credits, substituting a person's proper name */
+      XO("%s, QA tester, documentation and support");
    const auto documentationAndSupportFrenchFormat =
    /* i18n-hint: For "About Audacity..." credits, substituting a person's proper name */
       XO("%s, documentation and support, French");
@@ -129,7 +135,8 @@ void AboutDialog::CreateCreditsList()
    AddCredit(wxT("Greg Kozikowski"), documentationAndSupportFormat, roleTeamMember);
    AddCredit(wxT("Paul Licameli"), developerFormat, roleTeamMember);
    AddCredit(wxT("Leland Lucius"), developerFormat, roleTeamMember);
-   AddCredit(wxT("Peter Sampson"), roleTeamMember);
+   AddCredit(wxT("Peter Sampson"), qaDocumentationAndSupportFormat, roleTeamMember);
+   AddCredit(wxT("Dmitry Vedenko"), developerFormat, roleTeamMember);
    AddCredit(wxT("Bill Wharrie"), documentationAndSupportFormat, roleTeamMember);
 
    // Emeritus: people who were "lead developers" or made an

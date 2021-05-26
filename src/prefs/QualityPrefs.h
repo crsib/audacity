@@ -25,7 +25,7 @@ enum DitherType : unsigned;
 
 #define QUALITY_PREFS_PLUGIN_SYMBOL ComponentInterfaceSymbol{ XO("Quality") }
 
-class QualityPrefs final : public PrefsPanel
+class AUDACITY_DLL_API QualityPrefs final : public PrefsPanel
 {
  public:
    QualityPrefs(wxWindow * parent, wxWindowID winid);
@@ -36,8 +36,6 @@ class QualityPrefs final : public PrefsPanel
    bool Commit() override;
    wxString HelpPageName() override;
    void PopulateOrExchange(ShuttleGui & S) override;
-
-   static sampleFormat SampleFormatChoice();
 
  private:
    void Populate();

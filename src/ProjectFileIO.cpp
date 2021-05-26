@@ -36,6 +36,10 @@ Paul Licameli split from AudacityProject.cpp
 #include "wxFileNameWrapper.h"
 #include "xml/XMLFileReader.h"
 
+// Don't change this unless the file format changes
+// in an irrevocable way
+#define AUDACITY_FILE_FORMAT_VERSION "1.3.0"
+
 #undef NO_SHM
 #if !defined(__WXMSW__)
    #define NO_SHM
@@ -363,10 +367,14 @@ bool ProjectFileIO::OpenConnection(FilePath fileName /* = {}  */)
    // Pass weak_ptr to project into DBConnection constructor
    curConn = std::make_unique<DBConnection>(
       mProject.shared_from_this(), mpErrors, [this]{ OnCheckpointFailure(); } );
-   if (!curConn->Open(fileName))
+   auto rc = curConn->Open(fileName);
+   if (rc != SQLITE_OK)
    {
-      SetDBError(
-         XO("Failed to open database file:\n\n%s").Format(fileName)
+      // Must use SetError() here since we do not have an active DB
+      SetError(
+         XO("Failed to open database file:\n\n%s").Format(fileName),
+         {},
+         rc
       );
       curConn.reset();
       return false;
@@ -439,7 +447,12 @@ void ProjectFileIO::DiscardConnection()
          wxFileName file(mPrevFileName);
          file.SetFullName(wxT(""));
          if (file == temp)
-            RemoveProject(mPrevFileName);
+         {
+            if (!RemoveProject(mPrevFileName))
+            {
+               wxLogMessage("Failed to remove temporary project %s", mPrevFileName);
+            }
+         }
       }
       mPrevConn = nullptr;
       mPrevFileName.clear();
@@ -644,7 +657,7 @@ bool ProjectFileIO::CheckVersion()
    if (version > ProjectFileVersion)
    {
       SetError(
-         XO("This project was created with a newer version of Audacity:\n\nYou will need to upgrade to process it")
+         XO("This project was created with a newer version of Audacity.\n\nYou will need to upgrade to open it.")
       );
       return false;
    }
@@ -717,7 +730,6 @@ bool ProjectFileIO::DeleteBlocks(const BlockIDs &blockids, bool complement)
    {
       /* i18n-hint: An error message.  Don't translate inset or blockids.*/
       SetDBError(XO("Unable to add 'inset' function (can't verify blockids)"));
-      wxLogWarning(GetLastError().Translation());
       return false;
    }
 
@@ -755,7 +767,6 @@ bool ProjectFileIO::DeleteBlocks(const BlockIDs &blockids, bool complement)
          /* i18n-hint: An error message.  Don't translate blockfiles.*/
          SetDBError(XO("Unable to work with the blockfiles"));
 
-      wxLogWarning(GetLastError().Translation());
       return false;
    }
 
@@ -857,7 +868,10 @@ bool ProjectFileIO::CopyTo(const FilePath &destpath,
 
    // Attach the destination database 
    wxString sql;
-   sql.Printf("ATTACH DATABASE '%s' AS outbound;", destpath.ToUTF8());
+   wxString dbName = destpath;
+   // Bug 2793: Quotes in name need escaping for sqlite3.
+   dbName.Replace( "'", "''");
+   sql.Printf("ATTACH DATABASE '%s' AS outbound;", dbName.ToUTF8());
 
    rc = sqlite3_exec(db, sql, nullptr, nullptr, nullptr);
    if (rc != SQLITE_OK)
@@ -872,7 +886,7 @@ bool ProjectFileIO::CopyTo(const FilePath &destpath,
    //
    // NOTE:  Between the above attach and setting the mode here, a normal DELETE
    //        mode journal will be used and will briefly appear in the filesystem.
-   if (!pConn->FastMode("outbound"))
+   if ( pConn->FastMode("outbound") != SQLITE_OK)
    {
       SetDBError(
          XO("Unable to switch to fast journaling mode")
@@ -1303,27 +1317,67 @@ void ProjectFileIO::Compact(
                if (wxRenameFile(tempName, origName))
                {
                   // Open the newly compacted original file
-                  OpenConnection(origName);
+                  if (OpenConnection(origName))
+                  {
+                     // Remove the old original file
+                     if (!wxRemoveFile(backName))
+                     {
+                        // Just log the error, nothing can be done to correct it
+                        // and WX should have logged another message showing the
+                        // system error code.
+                        wxLogWarning(wxT("Compaction failed to delete backup %s"), backName);
+                     }
 
-                  // Remove the old original file
-                  wxRemoveFile(backName);
+                     // Remember that we compacted
+                     mWasCompacted = true;
 
-                  // Remember that we compacted
-                  mWasCompacted = true;
+                     return;
+                  }
+                  else
+                  {
+                     wxLogWarning(wxT("Compaction failed to open new project %s"), origName);
+                  }
 
-                  return;
+                  if (!wxRenameFile(origName, tempName))
+                  {
+                     wxLogWarning(wxT("Compaction failed to rename orignal %s to temp %s"),
+                                  origName, tempName);
+                  }
+               }
+               else
+               {
+                  wxLogWarning(wxT("Compaction failed to rename temp %s to orig %s"),
+                                 origName, tempName);
                }
 
-               wxRenameFile(backName, origName);
+               if (!wxRenameFile(backName, origName))
+               {
+                  wxLogWarning(wxT("Compaction failed to rename back %s to orig %s"),
+                               backName, origName);
+               }
+            }
+            else
+            {
+               wxLogWarning(wxT("Compaction failed to rename orig %s to back %s"),
+                              backName, origName);
             }
          }
 
-         OpenConnection(origName);
+         if (!OpenConnection(origName))
+         {
+            wxLogWarning(wxT("Compaction failed to reopen %s"), origName);
+         }
       }
 
       // Did not achieve any real compaction
       // RemoveProject not needed for what was an attached database
-      wxRemoveFile(tempName);
+      if (!wxRemoveFile(tempName))
+      {
+         // Just log the error, nothing can be done to correct it
+         // and WX should have logged another message showing the
+         // system error code.
+         wxLogWarning(wxT("Failed to delete temporary file...ignoring"));
+      }
    }
 
    return;
@@ -1729,7 +1783,10 @@ bool ProjectFileIO::WriteDoc(const char *table,
    if (sqlite3_bind_blob(stmt, 1, dict.GetData(), dict.GetDataLen(), SQLITE_STATIC) ||
        sqlite3_bind_blob(stmt, 2, data.GetData(), data.GetDataLen(), SQLITE_STATIC))
    {
-      wxASSERT_MSG(false, wxT("Binding failed...bug!!!"));
+      SetDBError(
+         XO("Unable to bind to blob")
+      );
+      return false;
    }
 
    rc = sqlite3_step(stmt);
@@ -1976,10 +2033,16 @@ bool ProjectFileIO::SaveProject(
       //       there.
       {
          std::atomic_bool done = {false};
-         bool success = false;
+         bool success = true;
          auto thread = std::thread([&]
          {
-            success = newConn->Open(fileName);
+            auto rc =  newConn->Open(fileName);
+            if (rc != SQLITE_OK)
+            {
+               // Capture the error string
+               SetError(Verbatim(sqlite3_errstr(rc)));
+               success = false;
+            }
             done = true;
          });
 
@@ -2002,15 +2065,18 @@ bool ProjectFileIO::SaveProject(
          {
             // Additional help via a Help button links to the manual.
             ShowError(nullptr,
-                           XO("Error Saving Project"),
-                           XO("The project failed to open, possibly due to limited space\n"
-                              "on the storage device.\n\n%s").Format(GetLastError()),
-                           "Error:_Disk_full_or_not_writable");
+                      XO("Error Saving Project"),
+                      XO("The project failed to open, possibly due to limited space\n"
+                         "on the storage device.\n\n%s").Format(GetLastError()),
+                      "Error:_Disk_full_or_not_writable");
 
             newConn = nullptr;
 
             // Clean up the destination project
-            wxRemoveFile(fileName);
+            if (!wxRemoveFile(fileName))
+            {
+               wxLogMessage("Failed to remove destination project after open failure: %s", fileName);
+            }
 
             return false;
          }
@@ -2021,15 +2087,18 @@ bool ProjectFileIO::SaveProject(
       {
          // Additional help via a Help button links to the manual.
          ShowError(nullptr,
-                        XO("Error Saving Project"),
-                        XO("Unable to remove autosave information, possibly due to limited space\n"
-                           "on the storage device.\n\n%s").Format(GetLastError()),
-                        "Error:_Disk_full_or_not_writable");
+                   XO("Error Saving Project"),
+                   XO("Unable to remove autosave information, possibly due to limited space\n"
+                      "on the storage device.\n\n%s").Format(GetLastError()),
+                  "Error:_Disk_full_or_not_writable");
 
          newConn = nullptr;
 
          // Clean up the destination project
-         wxRemoveFile(fileName);
+         if (!wxRemoveFile(fileName))
+         {
+            wxLogMessage("Failed to remove destination project after AutoSaveDelete failure: %s", fileName);
+         }
 
          return false;
       }
@@ -2039,6 +2108,7 @@ bool ProjectFileIO::SaveProject(
          bool recovered = mRecovered;
          SampleBlockIDSet blockids;
          InspectBlocks( *lastSaved, {}, &blockids );
+         // TODO: Not sure what to do if the deletion fails
          DeleteBlocks(blockids, true);
          // Don't set mRecovered if any were deleted
          mRecovered = recovered;

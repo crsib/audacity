@@ -21,11 +21,11 @@ and TimeTrack.
 
 *//*******************************************************************/
 
-#include "Audacity.h" // for USE_* macros
+
 
 #include "Track.h"
 
-#include "Experimental.h"
+
 
 #include <algorithm>
 #include <numeric>

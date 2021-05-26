@@ -20,10 +20,10 @@ used throughout Audacity into this one place.
 
 *//********************************************************************/
 
-#include "Audacity.h"
+
 #include "FileNames.h"
 
-#include "Experimental.h"
+
 
 #include "MemoryX.h"
 
@@ -343,7 +343,7 @@ FilePath FileNames::BaseDir()
    baseDir = PlatformCompatibility::GetExecutablePath();
 #else
    // Linux goes into /*prefix*/share/audacity/
-   baseDir = FileNames::LowerCaseAppNameInPath(wxStandardPaths::Get().GetDataDir());
+   baseDir = FileNames::LowerCaseAppNameInPath(wxStandardPaths::Get().GetPluginsDir());
 #endif
 
    return baseDir.GetPath();
@@ -516,6 +516,8 @@ wxString FileNames::PreferenceKey(FileNames::Operation op, FileNames::PathType t
          key = wxT("/Directories/Import"); break;
       case FileNames::Operation::Export:
          key = wxT("/Directories/Export"); break;
+      case FileNames::Operation::MacrosOut:
+         key = wxT("/Directories/MacrosOut"); break;
       case FileNames::Operation::_None:
       default:
          break;

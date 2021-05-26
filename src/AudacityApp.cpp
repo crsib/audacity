@@ -15,10 +15,10 @@ It handles initialization and termination by subclassing wxApp.
 
 *//*******************************************************************/
 
-#include "Audacity.h" // This should always be included first; for USE_* macros and __UNIX__
+
 #include "AudacityApp.h"
 
-#include "Experimental.h"
+
 
 #if 0
 // This may be used to debug memory leaks.
@@ -29,6 +29,7 @@ It handles initialization and termination by subclassing wxApp.
 #include <wx/setup.h> // for wxUSE_* macros
 #include <wx/wxcrtvararg.h>
 #include <wx/defs.h>
+#include <wx/evtloop.h>
 #include <wx/app.h>
 #include <wx/bitmap.h>
 #include <wx/docview.h>
@@ -76,7 +77,7 @@ It handles initialization and termination by subclassing wxApp.
 #include "AudioIO.h"
 #include "Benchmark.h"
 #include "Clipboard.h"
-#include "CrashReport.h"
+#include "CrashReport.h" // for HAS_CRASH_REPORT
 #include "commands/CommandHandler.h"
 #include "commands/AppCommandEvent.h"
 #include "widgets/ASlider.h"
@@ -111,6 +112,8 @@ It handles initialization and termination by subclassing wxApp.
 #include "widgets/FileConfig.h"
 #include "widgets/FileHistory.h"
 
+#include "NetworkManager.h"
+
 #ifdef EXPERIMENTAL_EASY_CHANGE_KEY_BINDINGS
 #include "prefs/KeyConfigPrefs.h"
 #endif
@@ -121,12 +124,6 @@ It handles initialization and termination by subclassing wxApp.
 #include "ModuleManager.h"
 
 #include "import/Import.h"
-
-#if defined(EXPERIMENTAL_CRASH_REPORT)
-#include <wx/debugrpt.h>
-#include <wx/evtloop.h>
-#include <wx/textdlg.h>
-#endif
 
 #ifdef EXPERIMENTAL_SCOREALIGN
 #include "effects/ScoreAlignDialog.h"
@@ -431,6 +428,14 @@ static void QuitAudacity(bool bForce)
    //print out profile if we have one by deleting it
    //temporarily commented out till it is added to all projects
    //DELETE Profiler::Instance();
+
+   // Save last log for diagnosis
+   auto logger = AudacityLogger::Get();
+   if (logger)
+   {
+      wxFileName logFile(FileNames::DataDir(), wxT("lastlog.txt"));
+      logger->SaveLog(logFile.GetFullPath());
+   }
 
    //remove our logger
    std::unique_ptr<wxLog>{ wxLog::SetActiveTarget(NULL) }; // DELETE
@@ -810,25 +815,8 @@ bool AudacityApp::MRUOpen(const FilePath &fullPathStr) {
          if (ProjectFileManager::IsAlreadyOpen(fullPathStr))
             return false;
 
-         // DMM: If the project is dirty, that means it's been touched at
-         // all, and it's not safe to open a NEW project directly in its
-         // place.  Only if the project is brand-NEW clean and the user
-         // hasn't done any action at all is it safe for Open to take place
-         // inside the current project.
-         //
-         // If you try to Open a NEW project inside the current window when
-         // there are no tracks, but there's an Undo history, etc, then
-         // bad things can happen, including data files moving to the NEW
-         // project directory, etc.
-         if (proj && (
-            ProjectHistory::Get( *proj ).GetDirty() ||
-            !TrackList::Get( *proj ).empty()
-         ) )
-            proj = nullptr;
-         // This project is clean; it's never been touched.  Therefore
-         // all relevant member variables are in their initial state,
-         // and it's okay to open a NEW project inside this window.
-         ( void ) ProjectManager::OpenProject( proj, fullPathStr );
+         ( void ) ProjectManager::OpenProject( proj, fullPathStr,
+               true /* addtohistory */, false /* reuseNonemptyProject */ );
       }
       else {
          // File doesn't exist - remove file from history
@@ -907,7 +895,9 @@ void AudacityApp::OnTimer(wxTimerEvent& WXUNUSED(event))
             // PRL: Catch any exceptions, don't try this file again, continue to
             // other files.
             if (!SafeMRUOpen(name)) {
-               wxFAIL_MSG(wxT("MRUOpen failed"));
+               // Just log it.  Assertion failure is not appropriate on valid
+               // defensive path against bad file data.
+               wxLogMessage(wxT("MRUOpen failed"));
             }
          }
       }
@@ -932,7 +922,7 @@ wxLanguageInfo userLangs[] =
 
 void AudacityApp::OnFatalException()
 {
-#if defined(EXPERIMENTAL_CRASH_REPORT)
+#if defined(HAS_CRASH_REPORT)
    CrashReport::Generate(wxDebugReport::Context_Exception);
 #endif
 
@@ -1001,7 +991,7 @@ AudacityApp::AudacityApp()
 {
 // Do not capture crashes in debug builds
 #if !defined(_DEBUG)
-#if defined(EXPERIMENTAL_CRASH_REPORT)
+#if defined(HAS_CRASH_REPORT)
 #if defined(wxUSE_ON_FATAL_EXCEPTION) && wxUSE_ON_FATAL_EXCEPTION
    wxHandleFatalExceptions();
 #endif
@@ -1109,6 +1099,9 @@ bool AudacityApp::OnInit()
    FilePaths audacityPathList;
 
 #ifdef __WXGTK__
+   // Make sure install prefix is set so wxStandardPath resolves paths properly
+   wxStandardPaths::Get().SetInstallPrefix(wxT(INSTALL_PREFIX));
+
    /* Search path (for plug-ins, translations etc) is (in this order):
       * The AUDACITY_PATH environment variable
       * The current directory
@@ -1141,12 +1134,16 @@ bool AudacityApp::OnInit()
 
    wxString progPath = wxPathOnly(argv[0]);
    FileNames::AddUniquePathToPathList(progPath, audacityPathList);
+   // Add the path to modules:
+   FileNames::AddUniquePathToPathList(progPath + L"/lib/audacity", audacityPathList);
 
    FileNames::AddUniquePathToPathList(FileNames::DataDir(), audacityPathList);
 
 #ifdef AUDACITY_NAME
    FileNames::AddUniquePathToPathList(wxString::Format(wxT("%s/.%s-files"),
       home, wxT(AUDACITY_NAME)),
+      audacityPathList);
+   FileNames::AddUniquePathToPathList(FileNames::ModulesDir(),
       audacityPathList);
    FileNames::AddUniquePathToPathList(wxString::Format(wxT("%s/share/%s"),
       wxT(INSTALL_PREFIX), wxT(AUDACITY_NAME)),
@@ -1158,6 +1155,8 @@ bool AudacityApp::OnInit()
    FileNames::AddUniquePathToPathList(wxString::Format(wxT("%s/.audacity-files"),
       home),
       audacityPathList)
+   FileNames::AddUniquePathToPathList(FileNames::ModulesDir(),
+      audacityPathList);
    FileNames::AddUniquePathToPathList(wxString::Format(wxT("%s/share/audacity"),
       wxT(INSTALL_PREFIX)),
       audacityPathList);
@@ -1318,11 +1317,11 @@ bool AudacityApp::InitPart2()
    // Initialize the CommandHandler
    InitCommandHandler();
 
+   // Initialize the ModuleManager, including loading found modules
+   ModuleManager::Get().Initialize();
+
    // Initialize the PluginManager
    PluginManager::Get().Initialize();
-
-   // Initialize the ModuleManager, including loading found modules
-   ModuleManager::Get().Initialize(*mCmdHandler);
 
    // Parse command line and handle options that might require
    // immediate exit...no need to initialize all of the audio
@@ -1444,15 +1443,6 @@ bool AudacityApp::InitPart2()
    // seemed to arrive with wx3.
    {
       project = ProjectManager::New();
-      wxWindow * pWnd = MakeHijackPanel();
-      if (pWnd)
-      {
-         auto &window = GetProjectFrame( *project );
-         window.Show(false);
-         pWnd->SetParent( &window );
-         SetTopWindow(pWnd);
-         pWnd->Show(true);
-      }
    }
 
    if( ProjectSettings::Get( *project ).GetShowSplashScreen() ){
@@ -1482,7 +1472,8 @@ bool AudacityApp::InitPart2()
       // Auto-recovery
       //
       bool didRecoverAnything = false;
-      if (!ShowAutoRecoveryDialogIfNeeded(&project, &didRecoverAnything))
+      // This call may reassign project (passed by reference)
+      if (!ShowAutoRecoveryDialogIfNeeded(project, &didRecoverAnything))
       {
          QuitAudacity(true);
       }
@@ -1490,7 +1481,7 @@ bool AudacityApp::InitPart2()
       //
       // Remainder of command line parsing, but only if we didn't recover
       //
-      if (!didRecoverAnything)
+      if (project && !didRecoverAnything)
       {
          if (parser->Found(wxT("t")))
          {
@@ -1546,6 +1537,21 @@ bool AudacityApp::InitPart2()
       system("tccutil reset Microphone org.audacityteam.audacity");
       gPrefs->Write(wxT("/MicrophonePermissionsReset"), true);
    }
+#endif
+
+#if defined(__WXMAC__)
+   // Bug 2709: Workaround CoreSVG locale issue
+   Bind(wxEVT_MENU_OPEN, [=](wxMenuEvent &event)
+   {
+      wxSetlocale(LC_NUMERIC, wxString(wxT("C")));
+      event.Skip();
+   });
+
+   Bind(wxEVT_MENU_CLOSE, [=](wxMenuEvent &event)
+   {
+      wxSetlocale(LC_NUMERIC, GUIPrefs::GetLocaleName());
+      event.Skip();
+   });
 #endif
 
    return TRUE;
@@ -1669,7 +1675,7 @@ bool AudacityApp::InitTempDir()
    // The permissions don't always seem to be set on
    // some platforms.  Hopefully this fixes it...
    #ifdef __UNIX__
-   chmod(OSFILENAME(temp), 0755);
+   chmod(OSFILENAME(temp), 0700);
    #endif
 
    TempDirectory::ResetTempDir();
@@ -2179,7 +2185,7 @@ int AudacityApp::OnExit()
       }
    }
 
-   FileHistory::Global().Save(*gPrefs, wxT("RecentFiles"));
+   FileHistory::Global().Save(*gPrefs);
 
    FinishPreferences();
 
@@ -2195,6 +2201,8 @@ int AudacityApp::OnExit()
 
    // Terminate the PluginManager (must be done before deleting the locale)
    PluginManager::Get().Terminate();
+
+   audacity::network_manager::NetworkManager::GetInstance().Terminate();
 
    return 0;
 }

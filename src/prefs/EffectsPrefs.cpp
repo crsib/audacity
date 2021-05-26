@@ -17,10 +17,8 @@
 
 *//*******************************************************************/
 
-#include "../Audacity.h" // for USE_* macros
-#include "EffectsPrefs.h"
 
-#include "../Experimental.h"
+#include "EffectsPrefs.h"
 
 #include <wx/choice.h>
 #include <wx/defs.h>

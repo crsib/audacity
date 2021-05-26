@@ -11,12 +11,9 @@ Paul Licameli
 #ifndef __AUDACITY_SPECTROGRAM_SETTINGS__
 #define __AUDACITY_SPECTROGRAM_SETTINGS__
 
-#include "../Experimental.h"
-
 #include "../Prefs.h"
 #include "../SampleFormat.h"
 #include "../RealFFTf.h"
-
 
 #undef SPECTRAL_SELECTION_GLOBAL_SWITCH
 
@@ -26,13 +23,13 @@ class NumberScale;
 class SpectrumPrefs;
 class wxArrayStringEx;
 
-class SpectrogramSettings : public PrefsListener
+class AUDACITY_DLL_API SpectrogramSettings : public PrefsListener
 {
    friend class SpectrumPrefs;
 public:
 
    // Singleton for settings that are not per-track
-   class Globals
+   class AUDACITY_DLL_API Globals
    {
    public:
       static Globals &Get();
