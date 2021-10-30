@@ -1298,6 +1298,18 @@ else()
    target_link_libraries(findlib ${CMAKE_DL_LIBS})
 endif()
 
+# Common to all platforms: remove the imageCompiler program so it isn't needlessly
+# copied into program bundles
+if (TARGET image-compiler)
+   add_custom_command(
+      TARGET
+         ${TARGET}
+      COMMAND
+         ${CMAKE_COMMAND} -E rm $<TARGET_FILE:image-compiler>
+      POST_BUILD
+   )
+endif ()
+
 if(CRASH_REPORT_URL)
     list(APPEND DEFINES PRIVATE -DCRASH_REPORT_URL="${CRASH_REPORT_URL}")
 endif()
