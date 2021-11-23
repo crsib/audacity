@@ -8,7 +8,14 @@ add_executable( image-compiler imageCompilerMain.cpp )
 set( OPTIONS )
 audacity_append_common_compiler_options( OPTIONS yes )
 target_compile_options( image-compiler PRIVATE "${OPTIONS}" )
-target_link_libraries( image-compiler PRIVATE lib-theme wxwidgets::wxwidgets   )
+target_link_libraries( image-compiler PRIVATE lib-theme wxwidgets::wxwidgets )
+
+set_target_properties(
+   image-compiler PROPERTIES
+   INSTALL_RPATH_USE_LINK_PATH Yes
+   BUILD_RPATH_USE_ORIGIN Yes
+   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/utils"
+)
 
 # Copy the required wxWidgets libs into the executable's directory
 add_custom_command(

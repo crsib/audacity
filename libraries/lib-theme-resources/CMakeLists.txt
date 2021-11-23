@@ -184,7 +184,9 @@ foreach( pair
 
    add_custom_command( OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${filename}.h"
       COMMAND ${command}
-      DEPENDS ${THEME_FILES} )
+      DEPENDS ${THEME_FILES}
+      COMMENT "Generating ${filename}.h..."
+      )
 endforeach()
 
 # Now define a more conventional library, using the output of the image compiler
