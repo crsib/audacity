@@ -46,5 +46,5 @@ int main(int argc, char *argv[])
 
    unsetenv("DYLD_LIBRARY_PATH");
 
-   execve(path, argv, environ);
+   return execve(path, argv, environ);
 }

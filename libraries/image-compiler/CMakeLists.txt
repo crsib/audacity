@@ -18,11 +18,16 @@ set_target_properties(
 )
 
 # Copy the required wxWidgets libs into the executable's directory
+
+if( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
+   set( libs_dest_postfix "/../Frameworks" )
+endif()
+
 add_custom_command(
    TARGET image-compiler
    COMMAND
       ${CMAKE_COMMAND} -D SRC="$<TARGET_FILE:image-compiler>"
-                        -D DST="$<TARGET_FILE_DIR:image-compiler>"
+                        -D DST="$<TARGET_FILE_DIR:image-compiler>${libs_dest_postfix}"
                         -D WXWIN="${_SHARED_PROXY_BASE_PATH}/$<CONFIG>/"
                         -P ${AUDACITY_MODULE_PATH}/CopyLibs.cmake
    POST_BUILD
