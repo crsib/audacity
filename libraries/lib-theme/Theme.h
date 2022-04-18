@@ -42,6 +42,8 @@ class wxBitmap;
 class wxColour;
 class wxImage;
 class wxPen;
+class Painter;
+class PainterImage;
 
 class ChoiceSetting;
 
@@ -174,11 +176,14 @@ public:
    void RecolourBitmap( int iIndex, wxColour From, wxColour To );
    void RecolourTheme();
 
-   int ColourDistance( wxColour & From, wxColour & To );
+   int ColourDistance( const wxColour & From, const wxColour & To );
    wxColour & Colour( int iIndex );
    wxBitmap & Bitmap( int iIndex );
    wxImage  & Image( int iIndex );
    wxSize ImageSize( int iIndex );
+
+   const PainterImage&
+   GetPainterImage(Painter& painter, int index, int x = 0, int y = 0, int w = 0, int h = 0);
 
    void ReplaceImage( int iIndex, wxImage * pImage );
    void RotateImageInto( int iTo, int iFrom, bool bClockwise );
@@ -205,6 +210,9 @@ protected:
 
    std::map<Identifier, ThemeSet> mSets;
    ThemeSet *mpSet = nullptr;
+
+   class PainterImageCache;
+   std::unique_ptr<PainterImageCache> mPainterImageCache;
 };
 
 class THEME_API Theme final : public ThemeBase
