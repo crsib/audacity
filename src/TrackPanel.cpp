@@ -552,7 +552,8 @@ void TrackPanel::ProcessUIHandleResult
       panel->UpdateVRuler(pClickedTrack);
 
    if (refreshResult & RefreshCode::DrawOverlays) {
-      panel->Refresh(false);
+      panel->Refresh();
+      mRuler->Refresh();
    }
 
    // Refresh all if told to do so, or if told to refresh a track that
@@ -563,7 +564,7 @@ void TrackPanel::ProcessUIHandleResult
        || ((refreshResult & RefreshLatestCell) && !pLatestTrack));
 
    if (refreshAll)
-      panel->Refresh(false);
+      panel->Refresh();
    else {
       if (refreshResult & RefreshCell)
          panel->RefreshTrack(pClickedTrack);
