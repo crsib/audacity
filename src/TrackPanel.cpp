@@ -500,8 +500,6 @@ void TrackPanel::OnPaint(wxPaintEvent & /* event */)
    auto clipStateMutator = mPainter->GetClipStateMutator();
    clipStateMutator.ResetClipRect();
    DrawOverlays(true, *mPainter);
-
-   mPainter->Flush();
 }
 
 void TrackPanel::MakeParentRedrawScrollbars()
