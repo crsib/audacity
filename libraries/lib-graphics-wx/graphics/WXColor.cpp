@@ -14,6 +14,9 @@
 #include <wx/colour.h>
 #include <wx/pen.h>
 
+namespace graphics::wx
+{
+
 Color ColorFromWXColor(const wxColour& color) noexcept
 {
    return Color(color.Red(), color.Green(), color.Blue(), color.Alpha());
@@ -28,3 +31,11 @@ Color ColorFromWXBrush(const wxBrush& brush) noexcept
 {
    return ColorFromWXColor(brush.GetColour());
 }
+
+wxColour wxColorFromColor(Color color) noexcept
+{
+   return wxColour(
+      color.GetRed(), color.GetGreen(), color.GetBlue(), color.GetAlpha());
+}
+
+} // namespace graphics::wx

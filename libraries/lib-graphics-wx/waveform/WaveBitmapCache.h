@@ -46,11 +46,11 @@ public:
    WaveBitmapCache& SetDisplayParameters(int height, double zoomMin, double zoomMax, bool showClipping);
    WaveBitmapCache& SetDBParameters(double dbRange, bool dbScale);
    WaveBitmapCache& SetSelection(const ZoomInfo& zoomInfo, double t0, double t1);
-   WaveBitmapCache& SetBlankColor(Color color);
-   WaveBitmapCache& SetBackgroundColors(Color normal, Color selected);
-   WaveBitmapCache& SetSampleColors(Color normal, Color selected);
-   WaveBitmapCache& SetRMSColors(Color normal, Color selected);
-   WaveBitmapCache& SetClippingColors(Color normal, Color selected);
+   WaveBitmapCache& SetBlankColor(graphics::Color color);
+   WaveBitmapCache& SetBackgroundColors(graphics::Color normal, graphics::Color selected);
+   WaveBitmapCache& SetSampleColors(graphics::Color normal, graphics::Color selected);
+   WaveBitmapCache& SetRMSColors(graphics::Color normal, graphics::Color selected);
+   WaveBitmapCache& SetClippingColors(graphics::Color normal, graphics::Color selected);
    WaveBitmapCache& SetEnvelope(const Envelope& envelope);
 
 private:
@@ -62,8 +62,8 @@ private:
 
    struct ColorPair final
    {
-      Color Normal;
-      Color Selected;
+      graphics::Color Normal;
+      graphics::Color Selected;
    };
 
    int mHeight { 0 };
@@ -84,7 +84,7 @@ private:
       }
    } mSelection;
 
-   Color mBlankColor;
+   graphics::Color mBlankColor;
 
    ColorPair mBackgroundColors;
    ColorPair mSampleColors;

@@ -32,14 +32,14 @@ struct Triplet final
 {
    Triplet() = default;
 
-   explicit Triplet(Color color)
+   explicit Triplet(graphics::Color color)
        : r(color.GetRed())
        , g(color.GetGreen())
        , b(color.GetBlue())
    {
    }
 
-   void SetColor(Color color)
+   void SetColor(graphics::Color color)
    {
       r = color.GetRed();
       g = color.GetGreen();
@@ -71,7 +71,7 @@ struct ColorFunction final
       return defaultColor;
    }
 
-   void SetStop(size_t index, Color color, uint32_t position)
+   void SetStop(size_t index, graphics::Color color, uint32_t position)
    {
       assert(index < Stops.size());
 
@@ -373,7 +373,7 @@ WaveBitmapCache& WaveBitmapCache::SetSelection(
    return *this;
 }
 
-WaveBitmapCache& WaveBitmapCache::SetBlankColor(Color color)
+WaveBitmapCache& WaveBitmapCache::SetBlankColor(graphics::Color color)
 {
    if (color != mBlankColor)
    {
@@ -384,8 +384,8 @@ WaveBitmapCache& WaveBitmapCache::SetBlankColor(Color color)
    return *this;
 }
 
-WaveBitmapCache&
-WaveBitmapCache::SetBackgroundColors(Color normal, Color selected)
+WaveBitmapCache& WaveBitmapCache::SetBackgroundColors(
+   graphics::Color normal, graphics::Color selected)
 {
    if (
       normal != mBackgroundColors.Normal ||
@@ -400,7 +400,8 @@ WaveBitmapCache::SetBackgroundColors(Color normal, Color selected)
    return *this;
 }
 
-WaveBitmapCache& WaveBitmapCache::SetSampleColors(Color normal, Color selected)
+WaveBitmapCache& WaveBitmapCache::SetSampleColors(
+   graphics::Color normal, graphics::Color selected)
 {
    if (normal != mSampleColors.Normal || selected != mSampleColors.Selected)
    {
@@ -413,7 +414,8 @@ WaveBitmapCache& WaveBitmapCache::SetSampleColors(Color normal, Color selected)
    return *this;
 }
 
-WaveBitmapCache& WaveBitmapCache::SetRMSColors(Color normal, Color selected)
+WaveBitmapCache&
+WaveBitmapCache::SetRMSColors(graphics::Color normal, graphics::Color selected)
 {
    if (normal != mRMSColors.Normal || selected != mRMSColors.Selected)
    {
@@ -426,7 +428,8 @@ WaveBitmapCache& WaveBitmapCache::SetRMSColors(Color normal, Color selected)
    return *this;
 }
 
-WaveBitmapCache& WaveBitmapCache::SetClippingColors(Color normal, Color selected)
+WaveBitmapCache& WaveBitmapCache::SetClippingColors(
+   graphics::Color normal, graphics::Color selected)
 {
    if (normal != mClippingColors.Normal || selected != mClippingColors.Selected)
    {

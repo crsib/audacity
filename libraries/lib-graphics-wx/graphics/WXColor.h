@@ -11,10 +11,13 @@
 #pragma once
 
 #include "graphics/Color.h"
+#include <wx/colour.h>
 
-class wxColour;
 class wxPen;
 class wxBrush;
+
+namespace graphics::wx
+{
 
 //! Convert from wxColor to Color
 GRAPHICS_WX_API Color ColorFromWXColor(const wxColour& color) noexcept;
@@ -22,3 +25,7 @@ GRAPHICS_WX_API Color ColorFromWXColor(const wxColour& color) noexcept;
 GRAPHICS_WX_API Color ColorFromWXPen(const wxPen& pen) noexcept;
 //! Gets the color of the wxBrush
 GRAPHICS_WX_API Color ColorFromWXBrush(const wxBrush& brush) noexcept;
+//! Convert from Color to wxColor
+GRAPHICS_WX_API wxColour wxColorFromColor(Color color) noexcept;
+
+} // namespace graphics::wx

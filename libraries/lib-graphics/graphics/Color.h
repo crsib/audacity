@@ -14,6 +14,9 @@
 #include <cstdint>
 #include <optional>
 
+namespace graphics
+{
+
 //! Class for storing color in 32-bit format.
 /*!
  * This class is used to store color in 32-bit ABGR format.
@@ -34,7 +37,7 @@ public:
    Color& operator=(Color&&) noexcept = default;
 
    //! Constructs a color from individual components.
-   constexpr Color(uint8_t rr, uint8_t gg, uint8_t bb, uint8_t aa) noexcept
+   constexpr Color(uint8_t rr, uint8_t gg, uint8_t bb, uint8_t aa = 255) noexcept
        : mRed(rr)
        , mGreen(gg)
        , mBlue(bb)
@@ -107,8 +110,8 @@ public:
    //! Returns color value as RGBA 32-bit integer.
    constexpr uint32_t GetRGBA() const noexcept
    {
-      return (uint32_t(mRed) << 24) + (uint32_t(mGreen) << 16) + (uint32_t(mBlue) << 8) +
-             (uint32_t(mAlpha));
+      return (uint32_t(mRed) << 24) + (uint32_t(mGreen) << 16) +
+             (uint32_t(mBlue) << 8) + (uint32_t(mAlpha));
    }
 
    //! Returns color value as ABGR 32-bit integer.
@@ -120,28 +123,29 @@ public:
    //! Returns color value as RGB integer.
    constexpr uint32_t GetRGB() const noexcept
    {
-      return (uint32_t(mRed) << 16) + (uint32_t(mGreen) << 8) + (uint32_t(mBlue));
+      return (uint32_t(mRed) << 16) + (uint32_t(mGreen) << 8) +
+             (uint32_t(mBlue));
    }
 
    friend constexpr Color operator+(Color lhs, Color rhs) noexcept
    {
       return Color(
-         Add(lhs.mRed, rhs.mRed), Add(lhs.mGreen, rhs.mGreen), Add(lhs.mBlue, rhs.mBlue),
-         Add(lhs.mAlpha, rhs.mAlpha));
+         Add(lhs.mRed, rhs.mRed), Add(lhs.mGreen, rhs.mGreen),
+         Add(lhs.mBlue, rhs.mBlue), Add(lhs.mAlpha, rhs.mAlpha));
    }
 
    friend constexpr Color operator-(Color lhs, Color rhs) noexcept
    {
       return Color(
-         Sub(lhs.mRed, rhs.mRed), Sub(lhs.mGreen, rhs.mGreen), Sub(lhs.mBlue, rhs.mBlue),
-         Sub(lhs.mAlpha, rhs.mAlpha));
+         Sub(lhs.mRed, rhs.mRed), Sub(lhs.mGreen, rhs.mGreen),
+         Sub(lhs.mBlue, rhs.mBlue), Sub(lhs.mAlpha, rhs.mAlpha));
    }
 
    friend constexpr Color operator*(Color lhs, Color rhs) noexcept
    {
       return Color(
-         Mul(lhs.mRed, rhs.mRed), Mul(lhs.mGreen, rhs.mGreen), Mul(lhs.mBlue, rhs.mBlue),
-         Mul(lhs.mAlpha, rhs.mAlpha));
+         Mul(lhs.mRed, rhs.mRed), Mul(lhs.mGreen, rhs.mGreen),
+         Mul(lhs.mBlue, rhs.mBlue), Mul(lhs.mAlpha, rhs.mAlpha));
    }
 
    template <typename ScaleType>
@@ -170,6 +174,7 @@ public:
    {
       return mABGR != rhs.mABGR;
    }
+
 private:
    static constexpr uint8_t Add(uint8_t a, uint8_t b) noexcept
    {
@@ -198,7 +203,8 @@ private:
 
       const auto lerpValue = (a + (b - a) * t);
 
-      const auto roundLerpValue = static_cast<int16_t>(lerpValue + ScaleType(0.5));
+      const auto roundLerpValue =
+         static_cast<int16_t>(lerpValue + ScaleType(0.5));
 
       const auto ui8LerpValue =
          static_cast<uint8_t>(std::max<decltype(roundLerpValue)>(
@@ -226,8 +232,10 @@ private:
 template <typename ScaleType>
 constexpr Color lerp(Color lhs, Color rhs, ScaleType t)
 {
-   return { Color::Lerp(lhs.mRed, rhs.mRed, t), Color::Lerp(lhs.mGreen, rhs.mGreen, t),
-            Color::Lerp(lhs.mBlue, rhs.mBlue, t), Color::Lerp(lhs.mAlpha, rhs.mAlpha, t) };
+   return { Color::Lerp(lhs.mRed, rhs.mRed, t),
+            Color::Lerp(lhs.mGreen, rhs.mGreen, t),
+            Color::Lerp(lhs.mBlue, rhs.mBlue, t),
+            Color::Lerp(lhs.mAlpha, rhs.mAlpha, t) };
 }
 
 //! A helper function to create a color from a 32-bit RGBA integer.
@@ -282,3 +290,5 @@ constexpr Color Green = ColorFromABGR(0xFF00FF00);
 //! Blue color constant.
 constexpr Color Blue = ColorFromABGR(0xFFFF0000);
 } // namespace Colors
+
+} // namespace graphics
