@@ -1,10 +1,13 @@
 #[[
 A library responsible for custom rendering in Audacity
-]]#
+]]
 
 set( SOURCES
    FrameStatistics.cpp
    FrameStatistics.h
+
+   graphics/Color.cpp
+   graphics/Color.h
 )
 set( LIBRARIES
    PRIVATE
