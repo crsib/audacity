@@ -17,6 +17,7 @@ set( SOURCES
    ########################################
    # Additional rendering backend loaders
    ########################################
+   $<$<PLATFORM_ID:Windows>:loaders/D2DLoader.cpp>
 )
 set( LIBRARIES
    PUBLIC
@@ -24,7 +25,7 @@ set( LIBRARIES
    PRIVATE
       lib-math-interface
       lib-screen-geometry-interface
-      lib-track-interface
+      $<$<PLATFORM_ID:Windows>:lib-graphics-d2d-interface>
       wxwidgets::base
       wxwidgets::core
 )
