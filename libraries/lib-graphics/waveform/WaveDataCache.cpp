@@ -123,7 +123,7 @@ void processBlock(
       squareSum += rms * rms * blockSize;
    }
 
-   // By construction, min should be always less than max.
+   // By construction, min should be always not greater than max.
    assert(min <= max);
 
    summary.Min = min;

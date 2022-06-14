@@ -17,63 +17,56 @@
 #include "GraphicsDataCache.h"
 
 #include "graphics/Color.h"
+#include "graphics/RendererID.h"
+#include "waveform/WavePaintParameters.h"
 
 class wxBitmap;
 class wxImage;
 class WaveDataCache;
 class Envelope;
 
+namespace graphics
+{
+class PainterImage;
+class Painter;
+} // namespace graphics
+
 //! An element, that contains a rasterized bitmap matching the WaveDataCacheElement
-struct GRAPHICS_WX_API WaveBitmapCacheElement final :
+struct GRAPHICS_API WaveBitmapCacheElement final :
     GraphicsDataCacheElementBase
 {
    ~WaveBitmapCacheElement();
 
    void Dispose() override;
 
-   std::unique_ptr<wxBitmap> Bitmap;
+   std::shared_ptr<graphics::PainterImage> Bitmap;
    size_t AvailableColumns { 0 };
 };
 
 //! Cache containing rasterized bitmaps representing the waveform
-class GRAPHICS_WX_API WaveBitmapCache final :
+class GRAPHICS_API WaveBitmapCache final :
     public GraphicsDataCache<WaveBitmapCacheElement>
 {
 public:
    WaveBitmapCache(std::shared_ptr<WaveDataCache> dataCache, double sampleRate);
    ~WaveBitmapCache();
 
-   WaveBitmapCache& SetDisplayParameters(int height, double zoomMin, double zoomMax, bool showClipping);
-   WaveBitmapCache& SetDBParameters(double dbRange, bool dbScale);
+   WaveBitmapCache& SetPaintParameters(const WavePaintParameters& params);
    WaveBitmapCache& SetSelection(const ZoomInfo& zoomInfo, double t0, double t1);
-   WaveBitmapCache& SetBlankColor(graphics::Color color);
-   WaveBitmapCache& SetBackgroundColors(graphics::Color normal, graphics::Color selected);
-   WaveBitmapCache& SetSampleColors(graphics::Color normal, graphics::Color selected);
-   WaveBitmapCache& SetRMSColors(graphics::Color normal, graphics::Color selected);
-   WaveBitmapCache& SetClippingColors(graphics::Color normal, graphics::Color selected);
-   WaveBitmapCache& SetEnvelope(const Envelope& envelope);
+   WaveBitmapCache& SetPainter(graphics::Painter& painter);
 
 private:
    bool InitializeElement(
       const GraphicsDataCacheKey& key, WaveBitmapCacheElement& element) override;
 
+   void CheckCache(const ZoomInfo&, double, double) override;
+
 private:
    struct LookupHelper;
 
-   struct ColorPair final
-   {
-      graphics::Color Normal;
-      graphics::Color Selected;
-   };
+   WavePaintParameters mPaintParamters;
 
-   int mHeight { 0 };
-
-   double mMin { -1.0 };
-   double mMax { 1.0 };
-
-   double mDBRange { 60.0 };
-
-   struct  
+   struct   
    {
       int64_t FirstPixel { -1 };
       int64_t LastPixel { -1 };
@@ -83,20 +76,13 @@ private:
          return FirstPixel < LastPixel;
       }
    } mSelection;
-
-   graphics::Color mBlankColor;
-
-   ColorPair mBackgroundColors;
-   ColorPair mSampleColors;
-   ColorPair mRMSColors;
-   ColorPair mClippingColors;
-   
-   std::unique_ptr<wxImage> mCachedImage;
+ 
    std::unique_ptr<LookupHelper> mLookupHelper;
+   std::vector<uint8_t> mImageBuffer;
 
    const Envelope* mEnvelope { nullptr };
    size_t mEnvelopeVersion { 0 };
 
-   bool mShowClipping { false };
-   bool mDBScale { false };
+   graphics::Painter* mPainter { nullptr };
+   graphics::RendererID mRendererID;
 };

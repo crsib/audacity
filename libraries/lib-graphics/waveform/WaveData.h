@@ -21,8 +21,9 @@ struct GRAPHICS_API WaveDisplayColumn final
    float max;
    float rms;
 };
-// A bundle of data needed for drawing waveforms.  The object may or may not
-// own the storage for those arrays.  If it does, it destroys them.
+
+//! A bundle of data needed for drawing waveforms.  The object may or may not
+//! own the storage for those arrays.  If it does, it destroys them.
 class GRAPHICS_API WaveDisplay final
 {
 public:

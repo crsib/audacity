@@ -18,6 +18,7 @@
 #include "ZoomInfo.h"
 
 #include "waveform/WaveDataCache.h"
+#include "graphics/Painter.h"
 
 #include "Envelope.h"
 #include "FrameStatistics.h"
@@ -89,6 +90,8 @@ struct WaveBitmapCache::LookupHelper final
 
    bool PerformLookup(WaveBitmapCache* cache, GraphicsDataCacheKey key)
    {
+      DataCache->UpdateViewportWidth(cache->GetMaxViewportWidth());
+
       auto result = DataCache->PerformLookup(key);
 
       if (result == nullptr)
@@ -99,9 +102,10 @@ struct WaveBitmapCache::LookupHelper final
 
       const auto columnsCount = result->AvailableColumns;
 
-      if (cache->mDBScale)
+      if (cache->mPaintParamters.DBScale)
       {
-         auto GetDBValue = [dbRange = cache->mDBRange](float value)
+         auto GetDBValue =
+            [dbRange = cache->mPaintParamters.DBRange](float value)
          {
             float sign = (value >= 0 ? 1 : -1);
 
@@ -129,18 +133,19 @@ struct WaveBitmapCache::LookupHelper final
          }
       }
 
-      auto GetRowFromValue = [min = cache->mMin, max = cache->mMax,
-                              height = cache->mHeight,
-                              dbRange = cache->mDBRange](float value)
+      auto GetRowFromValue =
+         [min = cache->mPaintParamters.Min, max = cache->mPaintParamters.Max,
+          height = cache->mPaintParamters.Height](float value)
       {
          value = (max - value) / (max - min);
          return static_cast<int>(value * (height - 1) + 0.5);
       };
 
-      const auto height = cache->mHeight;
+      const auto height = cache->mPaintParamters.Height;
 
-      auto inputData =
-         cache->mDBScale ? DBRemappedColumns.data() : result->Data.data();
+      auto inputData = cache->mPaintParamters.DBScale ?
+                          DBRemappedColumns.data() :
+                          result->Data.data();
 
       auto envelope = cache->mEnvelope;
 
@@ -168,23 +173,23 @@ struct WaveBitmapCache::LookupHelper final
          inputData = EnvRemappedColumns.data();
       }
 
-      const bool hasTopBlankArea = cache->mMax > 1.0;
-      const auto globalMaxRow = GetRowFromValue(cache->mMax);
-      const auto globalMinRow = GetRowFromValue(cache->mMin) + 1;
+      const bool hasTopBlankArea = cache->mPaintParamters.Max > 1.0;
+      const auto globalMaxRow = GetRowFromValue(cache->mPaintParamters.Max);
+      const auto globalMinRow = GetRowFromValue(cache->mPaintParamters.Min) + 1;
 
-      const auto blankColor = cache->mBlankColor;
+      const auto blankColor = cache->mPaintParamters.BlankColor;
 
-      const auto backgroundColors = cache->mBackgroundColors;
-      const auto sampleColors = cache->mSampleColors;
-      const auto rmsColors = cache->mRMSColors;
-      const auto clipColors = cache->mClippingColors;
+      const auto backgroundColors = cache->mPaintParamters.BackgroundColors;
+      const auto sampleColors = cache->mPaintParamters.SampleColors;
+      const auto rmsColors = cache->mPaintParamters.RMSColors;
+      const auto clipColors = cache->mPaintParamters.ClippingColors;
 
       auto firstPixel = int64_t(key.FirstSample / cache->GetSampleRate() * key.PixelsPerSecond + 0.5);
 
       const auto selFirst = cache->mSelection.FirstPixel;
       const auto selLast = cache->mSelection.LastPixel;
 
-      const bool showClipping = cache->mShowClipping;
+      const bool showClipping = cache->mPaintParamters.ShowClipping;
 
       for (size_t column = 0; column < columnsCount; ++column)
       {
@@ -277,7 +282,7 @@ struct WaveBitmapCache::LookupHelper final
 
    WaveCacheElement::Columns DBRemappedColumns;
 
-   std::array<double, GraphicsDataCacheBase::CacheElementWidth> EnvelopeValues; 
+   std::array<double, GraphicsDataCacheBase::CacheElementWidth> EnvelopeValues;
    WaveCacheElement::Columns EnvRemappedColumns;
 
    size_t AvailableColumns { 0 };
@@ -290,7 +295,6 @@ WaveBitmapCache::WaveBitmapCache(
     , mLookupHelper(std::make_unique<LookupHelper>(std::move(dataCache)))
 {
 }
-
 
 WaveBitmapCache::~WaveBitmapCache()
 {
@@ -305,43 +309,14 @@ void WaveBitmapCacheElement::Dispose()
    Bitmap = {};
 }
 
-WaveBitmapCache& WaveBitmapCache::SetDisplayParameters(
-   int height, double min, double max, bool showClipping)
+WaveBitmapCache&
+WaveBitmapCache::SetPaintParameters(const WavePaintParameters& params)
 {
-   const bool needsUpdate =
-      height != mHeight ||
-      showClipping != mShowClipping ||
-      std::abs(min - mMin) > std::numeric_limits<float>::epsilon() ||
-      std::abs(max - mMax) > std::numeric_limits<float>::epsilon();
-
-   if (height != mHeight)
-      mCachedImage = {};
-
-   if (needsUpdate)
+   if (mPaintParamters != params)
    {
-      mHeight = height;
-      mMin = min;
-      mMax = max;
-
-      mShowClipping = showClipping;
-
-      Invalidate();
-   }
-
-   return *this;
-}
-
-WaveBitmapCache& WaveBitmapCache::SetDBParameters(double dbRange, bool dbScale)
-{
-   const bool needsUpdate =
-      dbScale != mDBScale ||
-      (dbScale &&  std::abs(dbRange - mDBRange) > std::numeric_limits<float>::epsilon());
-
-
-   if (needsUpdate)
-   {
-      mDBRange = dbRange;
-      mDBScale = dbScale;
+      mPaintParamters = params;
+      mEnvelope = params.AttachedEnvelope;
+      mEnvelopeVersion = mEnvelope != nullptr ? mEnvelope->GetVersion() : 0;
 
       Invalidate();
    }
@@ -373,119 +348,44 @@ WaveBitmapCache& WaveBitmapCache::SetSelection(
    return *this;
 }
 
-WaveBitmapCache& WaveBitmapCache::SetBlankColor(graphics::Color color)
+void WaveBitmapCache::CheckCache(const ZoomInfo&, double, double)
 {
-   if (color != mBlankColor)
-   {
-      mBlankColor = color;
-      Invalidate();
-   }
-
-   return *this;
-}
-
-WaveBitmapCache& WaveBitmapCache::SetBackgroundColors(
-   graphics::Color normal, graphics::Color selected)
-{
-   if (
-      normal != mBackgroundColors.Normal ||
-      selected != mBackgroundColors.Selected)
-   {
-      mBackgroundColors.Normal = normal;
-      mBackgroundColors.Selected = selected;
-
-      Invalidate();
-   }
-
-   return *this;
-}
-
-WaveBitmapCache& WaveBitmapCache::SetSampleColors(
-   graphics::Color normal, graphics::Color selected)
-{
-   if (normal != mSampleColors.Normal || selected != mSampleColors.Selected)
-   {
-      mSampleColors.Normal = normal;
-      mSampleColors.Selected = selected;
-
-      Invalidate();
-   }
-
-   return *this;
-}
-
-WaveBitmapCache&
-WaveBitmapCache::SetRMSColors(graphics::Color normal, graphics::Color selected)
-{
-   if (normal != mRMSColors.Normal || selected != mRMSColors.Selected)
-   {
-      mRMSColors.Normal = normal;
-      mRMSColors.Selected = selected;
-
-      Invalidate();
-   }
-
-   return *this;
-}
-
-WaveBitmapCache& WaveBitmapCache::SetClippingColors(
-   graphics::Color normal, graphics::Color selected)
-{
-   if (normal != mClippingColors.Normal || selected != mClippingColors.Selected)
-   {
-      mClippingColors.Normal = normal;
-      mClippingColors.Selected = selected;
-
-      Invalidate();
-   }
-
-   return *this;
-}
-
-WaveBitmapCache& WaveBitmapCache::SetEnvelope(const Envelope& envelope)
-{
-   if (mEnvelope != &envelope)
-   {
-      mEnvelope = &envelope;
-      mEnvelopeVersion = mEnvelope->GetVersion();
-      Invalidate();
-   }
-   else if (mEnvelopeVersion != mEnvelope->GetVersion())
+   if (mEnvelope != nullptr && mEnvelopeVersion != mEnvelope->GetVersion())
    {
       mEnvelopeVersion = mEnvelope->GetVersion();
       Invalidate();
    }
-
-   return *this;
 }
 
 bool WaveBitmapCache::InitializeElement(
    const GraphicsDataCacheKey& key, WaveBitmapCacheElement& element)
 {
-   if (mHeight == 0)
+   if (mPaintParamters.Height == 0)
       return false;
-
-   if (!mCachedImage)
-      mCachedImage = std::make_unique<wxImage>(CacheElementWidth, mHeight);
 
    if (!mLookupHelper->PerformLookup(this, key))
-      return false;
+   {
+      element.Bitmap = mPainter->CreateImage(
+         graphics::PainterImageFormat::RGB888, 1, mPaintParamters.Height,
+         nullptr);
+
+      return true;
+   }
 
    auto sw = FrameStatistics::CreateStopwatch(
       FrameStatistics::SectionID::WaveBitmapCache);
 
-   auto imageData = mCachedImage->GetData();
-   constexpr auto stride = CacheElementWidth * 3;
-
    const auto columnsCount = mLookupHelper->AvailableColumns;
 
-   const auto defaultColor = Triplet(mBlankColor);
+   const auto defaultColor = Triplet(mPaintParamters.BlankColor);
 
-   const auto height = static_cast<uint32_t>(mHeight);
+   const auto height = static_cast<uint32_t>(mPaintParamters.Height);
+
+   mImageBuffer.reserve(3 * columnsCount * height);
+   auto rowData = mImageBuffer.data();
 
    for (uint32_t row = 0; row < height; ++row)
    {
-      auto rowData = imageData + row * stride;
       auto colorFunction = mLookupHelper->ColorFunctions.data();
 
       for (size_t pixel = 0; pixel < columnsCount; ++pixel)
@@ -503,8 +403,22 @@ bool WaveBitmapCache::InitializeElement(
    element.AvailableColumns = columnsCount;
    element.IsComplete = mLookupHelper->IsComplete;
 
-   element.Bitmap = std::make_unique<wxBitmap>(*mCachedImage);
+   element.Bitmap = mPainter->CreateImage(
+      graphics::PainterImageFormat::RGB888, columnsCount, height,
+      mImageBuffer.data());
 
    return true;
 }
 
+WaveBitmapCache& WaveBitmapCache::SetPainter(graphics::Painter& painter)
+{
+   if (mRendererID != painter.GetRendererID())
+   {
+      mRendererID = painter.GetRendererID();
+      Invalidate();
+   }
+
+   mPainter = &painter;
+
+   return *this;
+}

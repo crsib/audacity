@@ -34,13 +34,17 @@ set( SOURCES
    graphics/RendererID.h
    graphics/Size.h
    graphics/Transform.h
+
+   waveform/WaveBitmapCache.cpp
+   waveform/WaveBitmapCache.h
+   waveform/WaveClipPainter.cpp
+   waveform/WaveClipPainter.h
    waveform/WaveData.cpp
    waveform/WaveData.h
    waveform/WaveDataCache.cpp
    waveform/WaveDataCache.h
-
-   graphics/Color.cpp
-   graphics/Color.h
+   waveform/WavePaintParameters.cpp
+   waveform/WavePaintParameters.h
 )
 set( LIBRARIES
    PUBLIC
@@ -48,6 +52,7 @@ set( LIBRARIES
    PRIVATE
       lib-math-interface
       lib-screen-geometry-interface
+      lib-track-interface
       wxwidgets::base
 )
 audacity_library( lib-graphics "${SOURCES}" "${LIBRARIES}"

@@ -14,8 +14,9 @@ set( SOURCES
    graphics/WXPainterUtils.cpp
    graphics/WXPainterUtils.h
 
-   waveform/WaveBitmapCache.cpp
-   waveform/WaveBitmapCache.h
+   ########################################
+   # Additional rendering backend loaders
+   ########################################
 )
 set( LIBRARIES
    PUBLIC
