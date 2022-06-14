@@ -13,22 +13,31 @@
 
 #include "WaveClip.h"
 
-class WaveDisplay;
 class WaveDataCache;
-class WaveBitmapCache;
+class WaveClipPainter;
 
-struct WaveClipWaveformCache final : WaveClipListener
+namespace graphics
 {
+class Painter;
+}
+
+std::shared_ptr<WaveDataCache> CreateWaveClipDataCache(const WaveClip& clip);
+
+class WaveClipWaveformCache final : public WaveClipListener
+{
+public:
    WaveClipWaveformCache( WaveClip& clip );
    ~WaveClipWaveformCache() override;
 
-   std::shared_ptr<WaveDataCache> mWaveDataCache;
-   std::shared_ptr<WaveBitmapCache> mWaveBitmapCache;
-
    static WaveClipWaveformCache &Get( const WaveClip &clip );
+
+   WaveClipPainter& GetClipPainter(const graphics::Painter& painter);
 
    void MarkChanged() override; // NOFAIL-GUARANTEE
    void Invalidate() override; // NOFAIL-GUARANTEE
+private:
+   std::shared_ptr<WaveDataCache> mWaveDataCache;
+   std::shared_ptr<WaveClipPainter> mWaveClipPainter;
 };
 
 #endif

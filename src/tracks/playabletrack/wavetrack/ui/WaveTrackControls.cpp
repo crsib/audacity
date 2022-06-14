@@ -38,6 +38,10 @@ Paul Licameli split from TrackPanel.cpp
 #include "UserException.h"
 #include "Identifier.h"
 
+#include "graphics/Painter.h"
+#include "graphics/WXPainterUtils.h"
+#include "CodeConversions.h"
+
 #include <wx/app.h>
 #include <wx/combobox.h>
 #include <wx/frame.h>
@@ -975,14 +979,14 @@ namespace {
 void SliderDrawFunction
 ( LWSlider *(*Selector)
     (const wxRect &sliderRect, const WaveTrack *t, bool captured, wxWindow*),
-  wxDC *dc, const wxRect &rect, const Track *pTrack,
+   graphics::Painter& painter, const wxRect& rect, const Track* pTrack,
   wxWindow *pParent,
   bool captured, bool highlight )
 {
    wxRect sliderRect = rect;
    TrackInfo::GetSliderHorizontalBounds( rect.GetTopLeft(), sliderRect );
    auto wt = static_cast<const WaveTrack*>( pTrack );
-   Selector( sliderRect, wt, captured, pParent )->OnPaint(*dc, highlight);
+   Selector( sliderRect, wt, captured, pParent )->OnPaint(painter, highlight);
 }
 
 void PanSliderDrawFunction
@@ -990,7 +994,7 @@ void PanSliderDrawFunction
   const wxRect &rect, const Track *pTrack )
 {
    auto target = dynamic_cast<PanSliderHandle*>( context.target.get() );
-   auto dc = &context.dc;
+   auto& painter = context.painter;
    bool hit = target && target->GetTrack().get() == pTrack;
    bool captured = hit && target->IsClicked();
 
@@ -998,7 +1002,7 @@ void PanSliderDrawFunction
    auto pParent = FindProjectFrame( artist->parent->GetProject() );
 
    SliderDrawFunction(
-      &WaveTrackControls::PanSlider, dc, rect, pTrack,
+      &WaveTrackControls::PanSlider, painter, rect, pTrack,
       pParent, captured, hit);
 }
 
@@ -1007,7 +1011,7 @@ void GainSliderDrawFunction
   const wxRect &rect, const Track *pTrack )
 {
    auto target = dynamic_cast<GainSliderHandle*>( context.target.get() );
-   auto dc = &context.dc;
+   auto& painter = context.painter;
    bool hit = target && target->GetTrack().get() == pTrack;
    if( hit )
       hit=hit;
@@ -1017,22 +1021,23 @@ void GainSliderDrawFunction
    auto pParent = FindProjectFrame( artist->parent->GetProject() );
 
    SliderDrawFunction(
-      &WaveTrackControls::GainSlider, dc, rect, pTrack,
+      &WaveTrackControls::GainSlider, painter, rect, pTrack,
       pParent, captured, hit);
 }
 
-void StatusDrawFunction
-   ( const TranslatableString &string, wxDC *dc, const wxRect &rect )
+void StatusDrawFunction(
+   const TranslatableString& string, graphics::Painter& painter,
+   const wxRect& rect)
 {
    static const int offset = 3;
-   dc->DrawText(string.Translation(), rect.x + offset, rect.y);
+   painter.DrawText(rect.x + offset, rect.y, audacity::ToUTF8(string.Translation()));
 }
 
 void Status1DrawFunction
 ( TrackPanelDrawingContext &context,
   const wxRect &rect, const Track *pTrack )
 {
-   auto dc = &context.dc;
+   auto& painter = context.painter;
    auto wt = static_cast<const WaveTrack*>(pTrack);
 
    /// Returns the string to be displayed in the track label
@@ -1054,18 +1059,18 @@ void Status1DrawFunction
    }
    s.Format( (int) (rate + 0.5) );
 
-   StatusDrawFunction( s, dc, rect );
+   StatusDrawFunction( s, painter, rect );
 }
 
 void Status2DrawFunction
 ( TrackPanelDrawingContext &context,
   const wxRect &rect, const Track *pTrack )
 {
-   auto dc = &context.dc;
+   auto& painter = context.painter;
    auto wt = static_cast<const WaveTrack*>(pTrack);
    auto format = wt ? wt->GetSampleFormat() : floatSample;
    auto s = GetSampleFormatStr(format);
-   StatusDrawFunction( s, dc, rect );
+   StatusDrawFunction( s, painter, rect );
 }
 
 }

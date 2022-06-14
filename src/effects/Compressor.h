@@ -25,6 +25,11 @@ class ShuttleGui;
 using Floats = ArrayOf<float>;
 using Doubles = ArrayOf<double>;
 
+namespace graphics
+{
+class Painter;
+}
+
 class EffectCompressor final : public EffectTwoPassSimpleMono
 {
 public:
@@ -161,6 +166,8 @@ private:
    void OnSize(wxSizeEvent & evt);
 
 private:
+   std::unique_ptr<graphics::Painter> mPainter;
+
    double & threshold;
    double & noiseFloor;
    double & ratio;

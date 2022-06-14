@@ -27,6 +27,8 @@
 #include "../tracks/playabletrack/wavetrack/ui/WaveTrackView.h"
 #include "../tracks/playabletrack/wavetrack/ui/WaveTrackViewConstants.h"
 
+#include <wx/time.h>
+
 // private helper classes and functions
 namespace {
 
@@ -265,8 +267,7 @@ void MoveWhenAudioInactive
       viewInfo.selectedRegion.collapseToT0();
 
       // Move the visual cursor, avoiding an unnecessary complete redraw
-      trackPanel.DrawOverlays(false);
-      ruler.DrawOverlays(false);
+      ruler.RequestFullRefresh();
    }
    else
    {
@@ -275,7 +276,7 @@ void MoveWhenAudioInactive
          viewInfo.selectedRegion.collapseToT0();
       else
          viewInfo.selectedRegion.collapseToT1();
-      trackPanel.Refresh(false);
+      trackPanel.RequestRefresh();
    }
 
    // Make sure NEW position is in view
@@ -466,7 +467,7 @@ void OnSelectAll(const CommandContext &context)
    for (auto lt : tracks.Selected< LabelTrack >()) {
       auto& view = LabelTrackView::Get(*lt);
       if (view.SelectAllText(context.project)) {
-         trackPanel.Refresh(false);
+         trackPanel.RequestRefresh();
          return;
       }
    }
@@ -476,7 +477,7 @@ void OnSelectAll(const CommandContext &context)
    for (auto wt : tracks.Any<WaveTrack>()) {
       auto& view = WaveTrackView::Get(*wt);
       if (view.SelectAllText(context.project)) {
-         trackPanel.Refresh(false);
+         trackPanel.RequestRefresh();
          return;
       }
    }

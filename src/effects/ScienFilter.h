@@ -30,6 +30,11 @@ class wxTextCtrl;
 class RulerPanel;
 class ShuttleGui;
 
+namespace graphics
+{
+class Painter;
+}
+
 class EffectScienFilterPanel;
 
 class EffectScienFilter final : public StatefulPerTrackEffect
@@ -188,6 +193,7 @@ private:
 private:
    EffectScienFilter *mEffect;
    wxWindow *mParent;
+   std::unique_ptr<graphics::Painter> mPainter;
 
    double mLoFreq;
    double mHiFreq;

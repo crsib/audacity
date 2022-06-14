@@ -32,6 +32,13 @@ class FrequencyPlotDialog;
 class FreqGauge;
 class RulerPanel;
 
+namespace graphics
+{
+class Painter;
+class PainterImage;
+class PainterStateMutator;
+} // namespace graphics
+
 DECLARE_EXPORTED_EVENT_TYPE(AUDACITY_DLL_API, EVT_FREQWINDOW_RECALC, -1);
 
 class FreqPlot final : public wxWindow
@@ -90,7 +97,7 @@ private:
    void SendRecalcEvent();
    void Recalc();
    void DrawPlot();
-   void DrawBackground(wxMemoryDC & dc);
+   void DrawBackground(graphics::PainterStateMutator& stateMutator);
 
    // PrefsListener implementation
    void UpdatePrefs() override;
@@ -146,7 +153,8 @@ private:
    float mYMax;
    float mYStep;
 
-   std::unique_ptr<wxBitmap> mBitmap;
+   std::unique_ptr<graphics::Painter> mPainter;
+   std::shared_ptr<graphics::PainterImage> mBitmap;
 
    int mMouseX;
    int mMouseY;

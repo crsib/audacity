@@ -41,6 +41,9 @@ Paul Licameli split from WaveTrackView.cpp
 
 #include "float_cast.h"
 
+#include "graphics/Painter.h"
+#include "graphics/WXPainterUtils.h"
+
 class BrushHandle;
 class SpectralData;
 
@@ -309,7 +312,7 @@ ChooseColorSet( float bin0, float bin1, float selBinLo,
       return AColor::ColorGradientEdge;
    if ((selBinLo < 0 || selBinLo < bin1) && (selBinHi < 0 || selBinHi > bin0))
       return  AColor::ColorGradientTimeAndFrequencySelected;
-   
+
    return  AColor::ColorGradientTimeSelected;
 }
 
@@ -320,7 +323,7 @@ void DrawClipSpectrum(TrackPanelDrawingContext &context,
                                    const std::shared_ptr<SpectralData> &mpSpectralData,
                                    bool selected)
 {
-   auto &dc = context.dc;
+   auto &painter = context.painter;
    const auto artist = TrackArtist::Get( context );
    bool onBrushTool = artist->onBrushTool;
    const auto &selectedRegion = *artist->pSelectedRegion;
@@ -335,7 +338,7 @@ void DrawClipSpectrum(TrackPanelDrawingContext &context,
    if (!WaveTrackView::ClipDetailsVisible(*clip, zoomInfo, rect))
    {
       auto clipRect = ClipParameters::GetClipRect(*clip, zoomInfo, rect);
-      TrackArt::DrawClipFolded(dc, clipRect);
+      TrackArt::DrawClipFolded(painter, clipRect);
       return;
    }
 
@@ -392,8 +395,9 @@ void DrawClipSpectrum(TrackPanelDrawingContext &context,
 #ifdef EXPERIMENTAL_FFT_Y_GRID
    const bool &fftYGrid = settings.fftYGrid;
 #endif
+   auto stateMutator = painter.GetStateMutator();
 
-   dc.SetPen(*wxTRANSPARENT_PEN);
+   stateMutator.SetPen(graphics::Pen::NoPen);
 
    // We draw directly to a bit image in memory,
    // and then paint this directly to our offscreen
@@ -771,7 +775,7 @@ void DrawClipSpectrum(TrackPanelDrawingContext &context,
             advanceFreqBinIter(yyToFreqBin(0));
          }
       }
-   
+
       for (int yy = 0; yy < hiddenMid.height; ++yy) {
          if(onBrushTool)
             maybeSelected = false;
@@ -831,19 +835,17 @@ void DrawClipSpectrum(TrackPanelDrawingContext &context,
    } // each xx
 
    dataHistory.pop_back();
-   wxBitmap converted = wxBitmap(image);
+   auto converted = painter.CreateImage(
+      graphics::PainterImageFormat::RGB888, image.GetWidth(), image.GetHeight(),
+      image.GetData());
 
-   wxMemoryDC memDC;
-
-   memDC.SelectObject(converted);
-
-   dc.Blit(mid.x, mid.y, mid.width, mid.height, &memDC, 0, 0, wxCOPY, FALSE);
+   painter.DrawImage(*converted, graphics::wx::RectFromWXRect(mid));
 
    // Draw clip edges, as also in waveform view, which improves the appearance
    // of split views
    {
       auto clipRect = ClipParameters::GetClipRect(*clip, zoomInfo, rect);
-      TrackArt::DrawClipEdges(dc, clipRect, selected);
+      TrackArt::DrawClipEdges(painter, clipRect, selected);
    }
 }
 
@@ -873,7 +875,7 @@ void SpectrumView::Draw(
    TrackPanelDrawingContext &context, const wxRect &rect, unsigned iPass )
 {
    if ( iPass == TrackArtist::PassTracks ) {
-      auto &dc = context.dc;
+      auto &painter = context.painter;
       // Update cache for locations, e.g. cutlines and merge points
       // Bug2588: do this for both channels, even if one is not drawn, so that
       // cut-line editing (which depends on the locations cache) works properly.
@@ -887,21 +889,12 @@ void SpectrumView::Draw(
          FindTrack()->SubstitutePendingChangedTrack());
 
       const auto artist = TrackArtist::Get( context );
-      
-#if defined(__WXMAC__)
-      wxAntialiasMode aamode = dc.GetGraphicsContext()->GetAntialiasMode();
-      dc.GetGraphicsContext()->SetAntialiasMode(wxANTIALIAS_NONE);
-#endif
 
       auto waveTrackView = GetWaveTrackView().lock();
       wxASSERT(waveTrackView.use_count());
-      
+
       auto seletedClip = waveTrackView->GetSelectedClip().lock();
       DoDraw( context, wt.get(), seletedClip.get(), rect );
-      
-#if defined(__WXMAC__)
-      dc.GetGraphicsContext()->SetAntialiasMode(aamode);
-#endif
    }
    WaveTrackSubView::Draw( context, rect, iPass );
 }

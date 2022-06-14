@@ -27,9 +27,13 @@ Paul Licameli split from TrackPanel.cpp
 #include "Scrubbing.h"
 #include "TrackView.h"
 
-#include <wx/dc.h>
+#include "graphics/Painter.h"
+#include "graphics/WXPainterUtils.h"
 
 #include <algorithm>
+
+using namespace graphics;
+using namespace graphics::wx;
 
 namespace {
    template < class LOW, class MID, class HIGH >
@@ -40,6 +44,8 @@ namespace {
 
    enum { IndicatorMediumWidth = 13 };
 }
+
+static constexpr auto kTimerInterval = std::chrono::milliseconds { 50 };
 
 PlayIndicatorOverlayBase::PlayIndicatorOverlayBase(AudacityProject *project, bool isMaster)
 : mProject(project)
@@ -59,33 +65,34 @@ unsigned PlayIndicatorOverlayBase::SequenceNumber() const
 namespace {
 // Returns the appropriate bitmap, and panel-relative coordinates for its
 // upper left corner.
-std::pair< wxPoint, wxBitmap > GetIndicatorBitmap( AudacityProject &project,
+std::pair< Point, std::shared_ptr<PainterImage> > GetIndicatorBitmap( Painter &painter, AudacityProject &project,
    wxCoord xx, bool playing)
 {
    bool pinned = Scrubber::Get( project ).IsTransportingPinned();
-   wxBitmap & bmp = theTheme.Bitmap( pinned ?
+   const auto& bmp = theTheme.GetPainterImage( painter, pinned ?
       (playing ? bmpPlayPointerPinned : bmpRecordPointerPinned) :
       (playing ? bmpPlayPointer : bmpRecordPointer)
    );
-   const int IndicatorHalfWidth = bmp.GetWidth() / 2;
-   return {
-      { xx - IndicatorHalfWidth - 1,
-         AdornedRulerPanel::Get(project).GetInnerRect().y },
-      bmp
-   };
+   const int IndicatorHalfWidth = bmp->GetWidth() / 2;
+   
+   return { Point { static_cast<float>(xx - IndicatorHalfWidth - 1),
+                    static_cast<float>(
+                       AdornedRulerPanel::Get(project).GetInnerRect().y) },
+            bmp };
 }
 }
 
-std::pair<wxRect, bool> PlayIndicatorOverlayBase::DoGetRectangle(wxSize size)
+std::pair<wxRect, bool>
+PlayIndicatorOverlayBase::DoGetRectangle(Painter& painter, wxSize size)
 {
    wxCoord width = 1, xx = mLastIndicatorX;
 
    if ( !mIsMaster ) {
       auto gAudioIO = AudioIO::Get();
       bool rec = gAudioIO->IsCapturing();
-      auto pair = GetIndicatorBitmap( *mProject, xx, !rec );
+      auto pair = GetIndicatorBitmap( painter, *mProject, xx, !rec );
       xx = pair.first.x;
-      width = pair.second.GetWidth();
+      width = pair.second->GetWidth();
    }
 
    // May be excessive height, but little matter
@@ -98,12 +105,14 @@ std::pair<wxRect, bool> PlayIndicatorOverlayBase::DoGetRectangle(wxSize size)
 }
 
 
-void PlayIndicatorOverlayBase::Draw(OverlayPanel &panel, wxDC &dc)
+void PlayIndicatorOverlayBase::Draw(OverlayPanel &panel, Painter &painter)
 {
    // Set play/record color
    auto gAudioIO = AudioIO::Get();
    bool rec = gAudioIO->IsCapturing();
-   AColor::IndicatorColor(&dc, !rec);
+
+   auto stateMutator = painter.GetStateMutator();
+   AColor::IndicatorColor(stateMutator, !rec);
 
    if (mIsMaster
        && mLastIsCapturing != mNewIsCapturing) {
@@ -116,19 +125,19 @@ void PlayIndicatorOverlayBase::Draw(OverlayPanel &panel, wxDC &dc)
    mLastIsCapturing = mNewIsCapturing;
 
    mLastIndicatorX = mNewIndicatorX;
-   if (!between_incexc(0, mLastIndicatorX, dc.GetSize().GetWidth()))
+   if (!between_incexc(0, mLastIndicatorX, painter.GetSize().width))
       return;
 
    if(auto tp = dynamic_cast<TrackPanel*>(&panel)) {
       wxASSERT(mIsMaster);
 
-      AColor::Line(dc, mLastIndicatorX, 0, mLastIndicatorX, tp->GetSize().GetHeight());
+      AColor::Line(painter, mLastIndicatorX, 0, mLastIndicatorX, tp->GetSize().GetHeight());
    }
    else if(auto ruler = dynamic_cast<AdornedRulerPanel*>(&panel)) {
       wxASSERT(!mIsMaster);
 
-      auto pair = GetIndicatorBitmap( *mProject, mLastIndicatorX, !rec );
-      dc.DrawBitmap( pair.second, pair.first.x, pair.first.y );
+      auto pair = GetIndicatorBitmap( painter, *mProject, mLastIndicatorX, !rec );
+      painter.DrawImage( *pair.second, pair.first.x, pair.first.y );
    }
    else
       wxASSERT(false);

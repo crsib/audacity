@@ -60,8 +60,15 @@
 #include <wx/dcclient.h>
 #include <wx/menu.h>
 
+#include "graphics/Painter.h"
+#include "graphics/WXPainterUtils.h"
+#include "graphics/WXColor.h"
+
 using std::min;
 using std::max;
+
+using namespace graphics;
+using namespace graphics::wx;
 
 //#define SCRUB_ABOVE
 
@@ -411,8 +418,8 @@ private:
 
    unsigned SequenceNumber() const override;
 
-   std::pair<wxRect, bool> DoGetRectangle(wxSize size) override;
-   void Draw(OverlayPanel &panel, wxDC &dc) override;
+   std::pair<wxRect, bool> DoGetRectangle(Painter& painter, wxSize size) override;
+   void Draw(OverlayPanel& panel, Painter& painter) override;
 
    TrackPanelGuidelineOverlay &mPartner;
 
@@ -443,8 +450,8 @@ private:
    void Update();
 
    unsigned SequenceNumber() const override;
-   std::pair<wxRect, bool> DoGetRectangle(wxSize size) override;
-   void Draw(OverlayPanel &panel, wxDC &dc) override;
+   std::pair<wxRect, bool> DoGetRectangle(Painter &painter,wxSize size) override;
+   void Draw(OverlayPanel& panel, Painter& painter) override;
 
    AudacityProject *mProject;
 
@@ -525,7 +532,7 @@ AdornedRulerPanel::ScrubbingRulerOverlay::SequenceNumber() const
 }
 
 std::pair<wxRect, bool>
-AdornedRulerPanel::ScrubbingRulerOverlay::DoGetRectangle(wxSize /*size*/)
+AdornedRulerPanel::ScrubbingRulerOverlay::DoGetRectangle(Painter&, wxSize /*size*/)
 {
    Update();
 
@@ -554,7 +561,7 @@ AdornedRulerPanel::ScrubbingRulerOverlay::DoGetRectangle(wxSize /*size*/)
 }
 
 void AdornedRulerPanel::ScrubbingRulerOverlay::Draw(
-   OverlayPanel & /*panel*/, wxDC &dc)
+   OverlayPanel & /*panel*/, Painter &painter)
 {
    mOldQPIndicatorPos = mNewQPIndicatorPos;
    mOldScrub = mNewScrub;
@@ -563,7 +570,7 @@ void AdornedRulerPanel::ScrubbingRulerOverlay::Draw(
       auto ruler = GetRuler();
       auto width = mOldScrub ? IndicatorBigWidth() : IndicatorSmallWidth;
       ruler->DoDrawScrubIndicator(
-         &dc, mOldQPIndicatorPos, width, mOldScrub, mOldSeek);
+         painter, mOldQPIndicatorPos, width, mOldScrub, mOldSeek);
    }
 }
 
@@ -599,7 +606,7 @@ void AdornedRulerPanel::TrackPanelGuidelineOverlay::Update()
 }
 
 std::pair<wxRect, bool>
-AdornedRulerPanel::TrackPanelGuidelineOverlay::DoGetRectangle(wxSize size)
+AdornedRulerPanel::TrackPanelGuidelineOverlay::DoGetRectangle(Painter&, wxSize size)
 {
    Update();
 
@@ -613,7 +620,7 @@ AdornedRulerPanel::TrackPanelGuidelineOverlay::DoGetRectangle(wxSize size)
 }
 
 void AdornedRulerPanel::TrackPanelGuidelineOverlay::Draw(
-   OverlayPanel &panel, wxDC &dc)
+   OverlayPanel &panel, Painter &painter)
 {
    mOldQPIndicatorPos = mPartner->mNewQPIndicatorPos;
    mOldIndicatorSnapped = mPartner->mNewIndicatorSnapped;
@@ -628,12 +635,14 @@ void AdornedRulerPanel::TrackPanelGuidelineOverlay::Draw(
             // Do not draw the quick-play guideline
             return;
       }
+
+      auto stateMutator = painter.GetStateMutator();
    
       mOldPreviewingScrub
-         ? AColor::IndicatorColor(&dc, true) // Draw green line for preview.
+         ? AColor::IndicatorColor(stateMutator, true) // Draw green line for preview.
          : (mOldIndicatorSnapped >= 0)
-            ? AColor::SnapGuidePen(&dc) // Yellow snap guideline
-            : AColor::Light(&dc, false);
+            ? AColor::SnapGuidePen(stateMutator) // Yellow snap guideline
+            : AColor::Light(stateMutator, false);
 
       // Draw indicator in all visible tracks
       auto pCellularPanel = dynamic_cast<CellularPanel*>( &panel );
@@ -648,7 +657,7 @@ void AdornedRulerPanel::TrackPanelGuidelineOverlay::Draw(
                return;
 
             // Draw the NEW indicator in its NEW location
-            AColor::Line(dc,
+            AColor::Line(painter,
                mOldQPIndicatorPos,
                rect.GetTop(),
                mOldQPIndicatorPos,
@@ -676,7 +685,6 @@ enum {
 
 BEGIN_EVENT_TABLE(AdornedRulerPanel, CellularPanel)
    EVT_IDLE( AdornedRulerPanel::OnIdle )
-   EVT_PAINT(AdornedRulerPanel::OnPaint)
    EVT_SIZE(AdornedRulerPanel::OnSize)
    EVT_LEAVE_WINDOW(AdornedRulerPanel::OnLeave)
 
@@ -1257,7 +1265,8 @@ AdornedRulerPanel::AdornedRulerPanel(AudacityProject* project,
    const wxSize& size,
    ViewInfo *viewinfo)
 :  CellularPanel(parent, id, pos, size, viewinfo)
-, mProject(project)
+    , mPainter(mRuler.GetPainter(this))
+    , mProject(project)
 {
    SetLayoutDirection(wxLayout_LeftToRight);
 
@@ -1520,7 +1529,7 @@ void AdornedRulerPanel::DoIdle()
    if (changed)
       // Cause ruler redraw anyway, because we may be zooming or scrolling,
       // showing or hiding the scrub bar, etc.
-      Refresh();
+      RequestFullRefresh();
 }
 
 void AdornedRulerPanel::OnAudioStartStop(AudioIOEvent evt)
@@ -1547,8 +1556,10 @@ void AdornedRulerPanel::OnAudioStartStop(AudioIOEvent evt)
       DoSelectionChange( mViewInfo->selectedRegion );
 }
 
-void AdornedRulerPanel::OnPaint(wxPaintEvent & WXUNUSED(evt))
+void AdornedRulerPanel::HandlePaintEvent(wxPaintEvent & WXUNUSED(evt))
 {
+   auto paintEvent = mPainter.Paint();
+
    const auto &viewInfo = ViewInfo::Get( *GetProject() );
    const auto &playRegion = viewInfo.playRegion;
    const auto playRegionBounds = std::pair{
@@ -1559,11 +1570,7 @@ void AdornedRulerPanel::OnPaint(wxPaintEvent & WXUNUSED(evt))
    mLastDrawnSelectedRegion = viewInfo.selectedRegion;
    // To do, note other fisheye state when we have that
 
-   wxPaintDC dc(this);
-
-   auto &backDC = GetBackingDCForRepaint();
-
-   DoDrawBackground(&backDC);
+   DoDrawBackground(mPainter);
 
    // Find play region rectangle, selected rectangle, and their overlap
    const auto rectP = PlayRegionRectangle(),
@@ -1581,23 +1588,22 @@ void AdornedRulerPanel::OnPaint(wxPaintEvent & WXUNUSED(evt))
       rectL = { rectL.GetTopLeft(), wxPoint{ rectO.GetLeft() - 1, bottom } };
    }
 
-   DoDrawPlayRegion(&backDC, rectP, rectL, rectR);
-   DoDrawOverlap(&backDC, rectO);
-   DoDrawSelection(&backDC, rectS, rectL, rectR);
+   DoDrawPlayRegion(mPainter, rectP, rectL, rectR);
+   DoDrawOverlap(mPainter, rectO);
+   DoDrawSelection(mPainter, rectS, rectL, rectR);
 
-   DoDrawPlayRegionLimits(&backDC, rectP);
+   DoDrawPlayRegionLimits(mPainter, rectP);
 
-   DoDrawMarks(&backDC, true);
+   DoDrawMarks(mPainter, true);
 
-   DoDrawEdge(&backDC);
-
-   DisplayBitmap(dc);
+   DoDrawEdge(mPainter);
 
    // Stroke extras direct to the client area,
    // maybe outside of the damaged area
    // As with TrackPanel, do not make a NEW wxClientDC or else Mac flashes badly!
-   dc.DestroyClippingRegion();
-   DrawOverlays(true, &dc);
+   auto clipStateMutator = mPainter.GetClipStateMutator();
+   clipStateMutator.ResetClipRect();
+   DrawOverlays(true, mPainter);
 }
 
 void AdornedRulerPanel::OnSize(wxSizeEvent &evt)
@@ -1617,7 +1623,7 @@ void AdornedRulerPanel::OnLeave(wxMouseEvent& evt)
 {
    evt.Skip();
    CallAfter([this]{
-      DrawBothOverlays();
+      RequestFullRefresh();
    });
 }
 
@@ -2149,16 +2155,18 @@ bool AdornedRulerPanel::SetPanelSize()
       return false;
 }
 
-void AdornedRulerPanel::DrawBothOverlays()
+void AdornedRulerPanel::RequestFullRefresh()
 {
    auto pCellularPanel =
       dynamic_cast<CellularPanel*>( &GetProjectPanel( *GetProject() ) );
+   
    if ( !pCellularPanel ) {
       wxASSERT( false );
    }
    else
-      pCellularPanel->DrawOverlays( false );
-   DrawOverlays( false );
+      pCellularPanel->RequestRefresh();
+   
+   RequestRefresh();
 }
 
 void AdornedRulerPanel::UpdateButtonStates()
@@ -2412,38 +2420,41 @@ static inline wxColour AlphaBlend(ColorId fg, ColorId bg, double alpha)
    };
 }
 
-void AdornedRulerPanel::DoDrawBackground(wxDC * dc)
+void AdornedRulerPanel::DoDrawBackground(Painter& painter)
 {
    // Draw AdornedRulerPanel border
-   AColor::UseThemeColour( dc, TimelineBackgroundColor() );
-   dc->DrawRectangle( mInner );
+   auto stateMutator = painter.GetStateMutator();
+   
+   AColor::UseThemeColour( stateMutator, TimelineBackgroundColor() );
+   painter.DrawRect(RectFromWXRect(mInner));
 
    if (ShowingScrubRuler()) {
       // Let's distinguish the scrubbing area by using a themable
       // colour and a line to set it off.  
-      AColor::UseThemeColour(dc, clrScrubRuler, TimelineTextColor() );
+      AColor::UseThemeColour(stateMutator, clrScrubRuler, TimelineTextColor() );
       wxRect ScrubRect = mScrubZone;
       ScrubRect.Inflate( 1,0 );
-      dc->DrawRectangle(ScrubRect);
+      painter.DrawRect(RectFromWXRect(ScrubRect));
    }
 }
 
-void AdornedRulerPanel::DoDrawEdge(wxDC *dc)
+void AdornedRulerPanel::DoDrawEdge(Painter& painter)
 {
    wxRect r = mOuter;
    r.width -= RightMargin;
    r.height -= BottomMargin;
-   AColor::BevelTrackInfo( *dc, true, r );
+   AColor::BevelTrackInfo( painter, true, r );
 
    // Black stroke at bottom
-   dc->SetPen( *wxBLACK_PEN );
-   AColor::Line( *dc, mOuter.x,
+   auto stateMutator = painter.GetStateMutator();
+   stateMutator.SetPen(Colors::Black);
+   AColor::Line( painter, mOuter.x,
                 mOuter.y + mOuter.height - 1,
                 mOuter.x + mOuter.width - 1	,
                 mOuter.y + mOuter.height - 1 );
 }
 
-void AdornedRulerPanel::DoDrawMarks(wxDC * dc, bool /*text */ )
+void AdornedRulerPanel::DoDrawMarks(Painter& painter, bool /*text */)
 {
    const double min = Pos2Time(0);
    const double hiddenMin = Pos2Time(0, true);
@@ -2452,12 +2463,14 @@ void AdornedRulerPanel::DoDrawMarks(wxDC * dc, bool /*text */ )
 
    mRuler.SetTickColour( theTheme.Colour( TimelineTextColor() ) );
    mRuler.SetRange( min, max, hiddenMin, hiddenMax );
-   mRuler.Draw( *dc );
+   mRuler.Draw( painter );
 }
 
 void AdornedRulerPanel::DrawSelection()
 {
-   Refresh();
+   // DrawSelection is called from the TrackPanel,
+   // so no need to additionally refresh it
+   RequestRefresh();
 }
 
 wxRect AdornedRulerPanel::PlayRegionRectangle() const
@@ -2493,7 +2506,8 @@ wxRect AdornedRulerPanel::RegionRectangle(double t0, double t1) const
 }
 
 void AdornedRulerPanel::DoDrawPlayRegion(
-   wxDC * dc, const wxRect &rectP, const wxRect &rectL, const wxRect &rectR)
+   Painter& painter, const wxRect& rectP, const wxRect& rectL,
+   const wxRect& rectR)
 {
    const auto &viewInfo = ViewInfo::Get(*mProject);
    const auto &playRegion = viewInfo.playRegion;
@@ -2504,69 +2518,83 @@ void AdornedRulerPanel::DoDrawPlayRegion(
 
    // Paint the selected region bolder if independently varying, else dim
    const auto color = TimelineLoopRegionColor(isActive);
-   dc->SetBrush( wxBrush( theTheme.Colour( color )) );
-   dc->SetPen(   wxPen(   theTheme.Colour( color )) );
 
-   dc->DrawRectangle( rectP.Intersect(rectL) );
-   dc->DrawRectangle( rectP.Intersect(rectR) );
+   auto stateMutator = painter.GetStateMutator();
+      
+   stateMutator.SetBrush(ColorFromWXColor(theTheme.Colour(color)));
+   stateMutator.SetPen(ColorFromWXColor(theTheme.Colour(color)));
+
+   painter.DrawRect(RectFromWXRect(rectP.Intersect(rectL)));
+   painter.DrawRect(RectFromWXRect(rectP.Intersect(rectR)));
 }
 
-void AdornedRulerPanel::DoDrawPlayRegionLimits(wxDC * dc, const wxRect &rect)
+void AdornedRulerPanel::DoDrawPlayRegionLimits(
+   Painter& painter, const wxRect& rect)
 {
    // Color the edges of the play region like the ticks and numbers
-   ADCChanger cleanup( dc );
-   const auto edgeColour = theTheme.Colour(TimelineLimitsColor());
-   dc->SetPen( { edgeColour } );
-   dc->SetBrush( { edgeColour } );
+   auto stateMutator = painter.GetStateMutator();
+   const auto edgeColour = ColorFromWXColor(theTheme.Colour(TimelineLimitsColor()))
+      ;
+   stateMutator.SetPen(edgeColour);
+   stateMutator.SetBrush(edgeColour);
 
    constexpr int side = 7;
    constexpr int sideLessOne = side - 1;
 
    // Paint two shapes, each a line plus triangle at bottom
-   const auto left = rect.GetLeft(),
+   const float left = rect.GetLeft(),
       right = rect.GetRight(),
       bottom = rect.GetBottom(),
       top = rect.GetTop();
    {
-      wxPoint points[]{
+      Point points[]{
          {left, bottom - sideLessOne},
          {left - sideLessOne, bottom},
          {left, bottom},
          {left, top},
       };
-      dc->DrawPolygon( 4, points );
+      painter.DrawPolygon( points, 4 );
    }
 
    {
-      wxPoint points[]{
+      Point points[]{
          {right, top},
          {right, bottom},
          {right + sideLessOne, bottom},
          {right, bottom - sideLessOne},
       };
-      dc->DrawPolygon( 4, points );
+      painter.DrawPolygon(points, 4);
    }
 }
 
 constexpr double SelectionOpacity = 0.2;
 
-void AdornedRulerPanel::DoDrawOverlap(wxDC * dc, const wxRect &rect)
+void AdornedRulerPanel::DoDrawOverlap(Painter& painter, const wxRect& rect)
 {
-   dc->SetBrush( wxBrush{ AlphaBlend(
+   auto stateMutator = painter.GetStateMutator();
+   
+   stateMutator.SetBrush(ColorFromWXColor(AlphaBlend(
       TimelineLimitsColor(), TimelineLoopRegionColor(mLastPlayRegionActive),
-      SelectionOpacity) } );
-   dc->SetPen( *wxTRANSPARENT_PEN );
-   dc->DrawRectangle( rect );
+      SelectionOpacity)));
+   
+   stateMutator.SetPen(Pen::NoPen);
+   
+   painter.DrawRect(RectFromWXRect(rect));
 }
 
 void AdornedRulerPanel::DoDrawSelection(
-   wxDC * dc, const wxRect &rectS, const wxRect &rectL, const wxRect &rectR)
+   Painter& painter, const wxRect& rectS, const wxRect& rectL,
+   const wxRect& rectR)
 {
-   dc->SetBrush( wxBrush{ AlphaBlend(
-      TimelineLimitsColor(), TimelineBackgroundColor(), SelectionOpacity) } );
-   dc->SetPen( *wxTRANSPARENT_PEN );
-   dc->DrawRectangle( rectS.Intersect(rectL) );
-   dc->DrawRectangle( rectS.Intersect(rectR) );
+   auto stateMutator = painter.GetStateMutator();
+   
+   stateMutator.SetBrush(ColorFromWXColor(AlphaBlend(
+      TimelineLimitsColor(), TimelineBackgroundColor(), SelectionOpacity)));
+   
+   stateMutator.SetPen(Pen::NoPen);
+
+   painter.DrawRect(RectFromWXRect(rectS.Intersect(rectL)));
+   painter.DrawRect(RectFromWXRect(rectS.Intersect(rectR)));
 }
 
 int AdornedRulerPanel::GetRulerHeight(bool showScrubBar)
@@ -2582,11 +2610,12 @@ void AdornedRulerPanel::SetLeftOffset(int offset)
 
 // Draws the scrubbing/seeking indicator.
 void AdornedRulerPanel::DoDrawScrubIndicator(
-   wxDC * dc, wxCoord xx, int width, bool scrub, bool seek)
+   Painter& painter, wxCoord xx, int width, bool scrub, bool seek)
 {
-   ADCChanger changer(dc); // Undo pen and brush changes at function exit
+   auto stateMutator = painter.GetStateMutator();
 
-   wxPoint tri[ 3 ];
+   Point tri[ 3 ];
+   
    if (seek) {
       auto height = IndicatorHeightForWidth(width);
       // Make four triangles
@@ -2602,22 +2631,22 @@ void AdornedRulerPanel::DoDrawScrubIndicator(
       tri[ 1 ].y = yy + height;
       tri[ 2 ].x = xx - TriangleWidth;
       tri[ 2 ].y = yy + height / 2;
-      dc->DrawPolygon( 3, tri );
+      painter.DrawPolygon(tri, 3);
 
       tri[ 0 ].x -= TriangleWidth;
       tri[ 1 ].x -= TriangleWidth;
       tri[ 2 ].x -= TriangleWidth;
-      dc->DrawPolygon( 3, tri );
+      painter.DrawPolygon(tri, 3);
 
       tri[ 0 ].x = tri[ 1 ].x = xx + IndicatorOffset;
       tri[ 2 ].x = xx + TriangleWidth;
-      dc->DrawPolygon( 3, tri );
+      painter.DrawPolygon(tri, 3);
 
 
       tri[ 0 ].x += TriangleWidth;
       tri[ 1 ].x += TriangleWidth;
       tri[ 2 ].x += TriangleWidth;
-      dc->DrawPolygon( 3, tri );
+      painter.DrawPolygon(tri, 3);
    }
    else if (scrub) {
       auto height = IndicatorHeightForWidth(width);
@@ -2633,10 +2662,10 @@ void AdornedRulerPanel::DoDrawScrubIndicator(
       tri[ 1 ].y = yy + height;
       tri[ 2 ].x = xx - IndicatorHalfWidth;
       tri[ 2 ].y = yy + height / 2;
-      dc->DrawPolygon( 3, tri );
+      painter.DrawPolygon(tri, 3);
       tri[ 0 ].x = tri[ 1 ].x = xx + IndicatorOffset;
       tri[ 2 ].x = xx + IndicatorHalfWidth;
-      dc->DrawPolygon( 3, tri );
+      painter.DrawPolygon(tri, 3);
    }
 }
 
@@ -2653,7 +2682,7 @@ void AdornedRulerPanel::SetPlayRegion(
    auto &playRegion = viewInfo.playRegion;
    playRegion.SetTimes( playRegionStart, playRegionEnd );
 
-   Refresh();
+   RequestRefresh();
 }
 
 void AdornedRulerPanel::ClearPlayRegion()
@@ -2664,7 +2693,7 @@ void AdornedRulerPanel::ClearPlayRegion()
    auto &playRegion = viewInfo.playRegion;
    playRegion.SetTimes( -1, -1 );
 
-   Refresh();
+   RequestRefresh();
 }
 
 void AdornedRulerPanel::GetMaxSize(wxCoord *width, wxCoord *height)
@@ -2765,10 +2794,8 @@ void AdornedRulerPanel::SetFocusedCell()
 void AdornedRulerPanel::ProcessUIHandleResult(
    TrackPanelCell *, TrackPanelCell *, unsigned refreshResult)
 {
-   if (refreshResult & RefreshCode::RefreshAll)
-      Refresh(); // Overlays will be repainted too
-   else if (refreshResult & RefreshCode::DrawOverlays)
-      DrawBothOverlays(); // cheaper redrawing of guidelines only
+   if (refreshResult & (RefreshCode::DrawOverlays | RefreshCode::RefreshAll))
+      RequestFullRefresh(); // cheaper redrawing of guidelines only
 }
 
 void AdornedRulerPanel::UpdateStatusMessage( const TranslatableString &message )

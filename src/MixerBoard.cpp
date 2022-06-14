@@ -24,6 +24,7 @@
 #include <wx/dcclient.h>
 #include <wx/icon.h>
 #include <wx/settings.h> // for wxSystemSettings::GetColour and wxSystemSettings::GetMetric
+#include <wx/dcmemory.h>
 
 #include "AColor.h"
 #include "AllThemeResources.h"

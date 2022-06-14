@@ -22,10 +22,10 @@
 
 #include "ZoomInfo.h"
 
-#include "waveform/WaveBitmapCache.h"
+#include "waveform/WaveClipPainter.h"
 #include "waveform/WaveDataCache.h"
 
-#include <wx/bitmap.h>
+#include "graphics/Painter.h"
 
 //
 // Getting high-level data from the track for screen display and
@@ -149,9 +149,9 @@ private:
    size_t mLastProcessedSample { 0 };
 };
 
-WaveClipWaveformCache::WaveClipWaveformCache(WaveClip& clip)
+std::shared_ptr<WaveDataCache> CreateWaveClipDataCache(const WaveClip& clip)
 {
-   mWaveDataCache = std::make_shared<WaveDataCache>(
+   return std::make_shared<WaveDataCache>(
       [sequence = clip.GetSequence(), rate = clip.GetRate(), clip = &clip,
        appendBufferHelper = AppendBufferHelper()](
          int64_t requiredSample, WaveCacheSampleBlock::Type dataType,
@@ -219,9 +219,11 @@ WaveClipWaveformCache::WaveClipWaveformCache(WaveClip& clip)
          return true;
       },
       clip.GetRate());
+}
 
-   mWaveBitmapCache =
-      std::make_shared<WaveBitmapCache>(mWaveDataCache, clip.GetRate());
+WaveClipWaveformCache::WaveClipWaveformCache(WaveClip& clip)
+{
+   mWaveDataCache = CreateWaveClipDataCache(clip);
 }
 
 WaveClipWaveformCache::~WaveClipWaveformCache()
@@ -238,6 +240,19 @@ WaveClipWaveformCache& WaveClipWaveformCache::Get(const WaveClip& clip)
       .Caches::Get<WaveClipWaveformCache>(sKeyW);
 }
 
+WaveClipPainter&
+WaveClipWaveformCache::GetClipPainter(const graphics::Painter& painter)
+{
+   if (mWaveClipPainter == nullptr)
+   {
+      mWaveClipPainter =
+         CreateWaveClipPainter(painter.GetRendererID(), mWaveDataCache);
+   }
+
+   // CreateWaveClipPainter only returns nullptr if mWaveDataCache is nullptr
+   return *mWaveClipPainter;
+}
+
 void WaveClipWaveformCache::MarkChanged()
 {
    // mWaveDataCache->Invalidate();
@@ -247,5 +262,5 @@ void WaveClipWaveformCache::MarkChanged()
 void WaveClipWaveformCache::Invalidate()
 {
    mWaveDataCache->Invalidate();
-   mWaveBitmapCache->Invalidate();
+   mWaveClipPainter = {};
 }

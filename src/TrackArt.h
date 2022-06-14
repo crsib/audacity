@@ -17,6 +17,11 @@ class wxDC;
 class wxRect;
 class wxString;
 
+namespace graphics
+{
+class Painter;
+}
+
 namespace TrackArt {
 
    static constexpr int ClipFrameRadius{ 6 };
@@ -27,12 +32,24 @@ namespace TrackArt {
    wxRect DrawClipAffordance(wxDC& dc, const wxRect& affordanceRect, const wxString& title, bool highlight = false, bool selected = false);
 
    AUDACITY_DLL_API
+   wxRect DrawClipAffordance(
+      graphics::Painter& painter, const wxRect& affordanceRect,
+      const wxString& title,
+      bool highlight = false, bool selected = false);
+
+   AUDACITY_DLL_API
    void DrawClipEdges(wxDC& dc, const wxRect& clipRect, bool selected = false);
+
+   AUDACITY_DLL_API
+   void DrawClipEdges(graphics::Painter& painter, const wxRect& clipRect, bool selected = false);
 
    //Used to draw clip boundaries without contents/details when it's not
    //sensible to show them
    AUDACITY_DLL_API
    void DrawClipFolded(wxDC& dc, const wxRect& rect);
+
+   AUDACITY_DLL_API
+   void DrawClipFolded(graphics::Painter& painter, const wxRect& rect);
 
    // Helper: draws the "sync-locked" watermark tiled to a rectangle
    AUDACITY_DLL_API

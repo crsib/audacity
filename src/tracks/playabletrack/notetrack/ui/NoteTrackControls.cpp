@@ -35,6 +35,7 @@ Paul Licameli split from TrackPanel.cpp
 #include <wx/app.h>
 #include <wx/frame.h>
 
+using namespace graphics;
 ///////////////////////////////////////////////////////////////////////////////
 NoteTrackControls::~NoteTrackControls()
 {
@@ -175,14 +176,14 @@ void GetMidiControlsHorizontalBounds( const wxRect &rect, wxRect &dest )
 void SliderDrawFunction
 ( LWSlider *(*Selector)
     (const wxRect &sliderRect, const NoteTrack *t, bool captured, wxWindow*),
-  wxDC *dc, const wxRect &rect, const Track *pTrack,
+  Painter &painter, const wxRect &rect, const Track *pTrack,
   wxWindow *pParent,
   bool captured, bool highlight )
 {
    wxRect sliderRect = rect;
    TrackInfo::GetSliderHorizontalBounds( rect.GetTopLeft(), sliderRect );
    auto nt = static_cast<const NoteTrack*>( pTrack );
-   Selector( sliderRect, nt, captured, pParent )->OnPaint(*dc, highlight);
+   Selector( sliderRect, nt, captured, pParent )->OnPaint(painter, highlight);
 }
 
 #ifdef EXPERIMENTAL_MIDI_OUT
@@ -190,7 +191,7 @@ void VelocitySliderDrawFunction
 ( TrackPanelDrawingContext &context,
   const wxRect &rect, const Track *pTrack )
 {
-   auto dc = &context.dc;
+   auto& painter = context.painter;
    auto target = dynamic_cast<VelocitySliderHandle*>( context.target.get() );
    bool hit = target && target->GetTrack().get() == pTrack;
    bool captured = hit && target->IsClicked();
@@ -199,7 +200,7 @@ void VelocitySliderDrawFunction
    auto pParent = FindProjectFrame( artist->parent->GetProject() );
 
    SliderDrawFunction(
-      &NoteTrackControls::VelocitySlider, dc, rect, pTrack,
+      &NoteTrackControls::VelocitySlider, painter, rect, pTrack,
       pParent, captured, hit);
 }
 #endif
@@ -211,11 +212,11 @@ void MidiControlsDrawFunction
    auto target = dynamic_cast<NoteTrackButtonHandle*>( context.target.get() );
    bool hit = target && target->GetTrack().get() == pTrack;
    auto channel = hit ? target->GetChannel() : -1;
-   auto &dc = context.dc;
+   auto& painter = context.painter;
    wxRect midiRect = rect;
    GetMidiControlsHorizontalBounds(rect, midiRect);
    NoteTrack::DrawLabelControls
-      ( static_cast<const NoteTrack *>(pTrack), dc, midiRect, channel );
+      ( static_cast<const NoteTrack *>(pTrack), painter, midiRect, channel );
 }
 }
 

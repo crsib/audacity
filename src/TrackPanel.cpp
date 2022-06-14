@@ -35,12 +35,6 @@
   Note that with stereo tracks there will be one TrackInfo
   being used by two wavetracks.
 
-*//*****************************************************************//**
-
-\class TrackPanel::AudacityTimer
-\brief Timer class dedicated to informing the TrackPanel that it
-is time to refresh some aspect of the screen.
-
 *//*****************************************************************/
 
 
@@ -95,6 +89,18 @@ is time to refresh some aspect of the screen.
 #include <wx/graphics.h>
 
 #include "effects/RealtimeEffectManager.h"
+
+#include "graphics/WXPainterFactory.h"
+#include "graphics/Painter.h"
+#include "graphics/WXColor.h"
+#include "graphics/WXPainterUtils.h"
+
+#include "CodeConversions.h"
+
+#include "effects/RealtimeEffectManager.h"
+
+using namespace graphics;
+using namespace graphics::wx;
 
 static_assert( kVerticalPadding == kTopMargin + kBottomMargin );
 static_assert( kTrackInfoBtnSize == kAffordancesAreaHeight, "Drag bar is misaligned with the menu button");
@@ -171,10 +177,6 @@ template < class A, class B, class DIST > bool within(A a, B b, DIST d)
 BEGIN_EVENT_TABLE(TrackPanel, CellularPanel)
     EVT_MOUSE_EVENTS(TrackPanel::OnMouseEvent)
     EVT_KEY_DOWN(TrackPanel::OnKeyDown)
-
-    EVT_PAINT(TrackPanel::OnPaint)
-
-    EVT_TIMER(wxID_ANY, TrackPanel::OnTimer)
 
     EVT_SIZE(TrackPanel::OnSize)
 
@@ -262,12 +264,13 @@ TrackPanel::TrackPanel(wxWindow * parent, wxWindowID id,
      mListener( &ProjectWindow::Get( *project ) ),
      mTracks(tracks),
      mRuler(ruler),
-     mTrackArtist(nullptr),
-     mRefreshBacking(false)
+     mTrackArtist(nullptr)
 #ifndef __WXGTK__   //Get rid if this pragma for gtk
 #pragma warning( default: 4355 )
 #endif
 {
+   mPainter = CreatePainter(this);
+
    SetLayoutDirection(wxLayout_LeftToRight);
    SetLabel(XO("Track Panel"));
    SetName(XO("Track Panel"));
@@ -290,9 +293,6 @@ TrackPanel::TrackPanel(wxWindow * parent, wxWindowID id,
 
    mTrackArtist = std::make_unique<TrackArtist>( this );
 
-   mTimeCount = 0;
-   mTimer.parent = this;
-   // Timer is started after the window is visible
    ProjectWindow::Get( *GetProject() ).Bind(wxEVT_IDLE,
       &TrackPanel::OnIdle, this);
 
@@ -328,7 +328,7 @@ TrackPanel::TrackPanel(wxWindow * parent, wxWindowID id,
       .Subscribe([this](const RealtimeEffectManagerMessage& msg)
       {
          if(msg.track)
-            //update "effects" button 
+            //update "effects" button
             RefreshTrack(msg.track.get());
       });
 
@@ -338,8 +338,6 @@ TrackPanel::TrackPanel(wxWindow * parent, wxWindowID id,
 
 TrackPanel::~TrackPanel()
 {
-   mTimer.Stop();
-
    // This can happen if a label is being edited and the user presses
    // ALT+F4 or Command+Q
    if (HasCapture())
@@ -352,7 +350,7 @@ void TrackPanel::UpdatePrefs()
    // frequencies may have been changed.
    UpdateVRulers();
 
-   Refresh();
+   RequestRefresh();
 }
 
 /// Gets the pointer to the AudacityProject that
@@ -382,74 +380,44 @@ void TrackPanel::OnSize( wxSizeEvent &evt )
 void TrackPanel::OnIdle(wxIdleEvent& event)
 {
    event.Skip();
-   // The window must be ready when the timer fires (#1401)
-   if (IsShownOnScreen())
-   {
-      mTimer.Start(std::chrono::milliseconds{kTimerInterval}.count(), FALSE);
 
-      // Timer is started, we don't need the event anymore
-      GetProjectFrame( *GetProject() ).Unbind(wxEVT_IDLE,
-         &TrackPanel::OnIdle, this);
-   }
-   else
-   {
-      // Get another idle event, wx only guarantees we get one
-      // event after "some other normal events occur"
-      event.RequestMore();
-   }
-}
+   if (!IsShownOnScreen())
+      return;
+   
+   AudacityProject* const p = GetProject();
+   auto& window = ProjectWindow::Get(*p);
 
-/// AS: This gets called on our wx timer events.
-void TrackPanel::OnTimer(wxTimerEvent& )
-{
-   mTimeCount++;
-
-   AudacityProject *const p = GetProject();
-   auto &window = ProjectWindow::Get( *p );
-
-   auto &projectAudioIO = ProjectAudioIO::Get( *p );
+   auto& projectAudioIO = ProjectAudioIO::Get(*p);
    auto gAudioIO = AudioIO::Get();
 
    // Check whether we were playing or recording, but the stream has stopped.
-   if (projectAudioIO.GetAudioIOToken()>0 && !IsAudioActive())
+   if (projectAudioIO.GetAudioIOToken() > 0 && !IsAudioActive())
    {
-      //the stream may have been started up after this one finished (by some other project)
-      //in that case reset the buttons don't stop the stream
-      auto &projectAudioManager = ProjectAudioManager::Get( *p );
+      // the stream may have been started up after this one finished (by some
+      // other project) in that case reset the buttons don't stop the stream
+      auto& projectAudioManager = ProjectAudioManager::Get(*p);
       projectAudioManager.Stop(!gAudioIO->IsStreamActive());
    }
 
    // Next, check to see if we were playing or recording
    // audio, but now Audio I/O is completely finished.
-   if (projectAudioIO.GetAudioIOToken()>0 &&
-         !gAudioIO->IsAudioTokenActive(projectAudioIO.GetAudioIOToken()))
+   if (
+      projectAudioIO.GetAudioIOToken() > 0 &&
+      !gAudioIO->IsAudioTokenActive(projectAudioIO.GetAudioIOToken()))
    {
       projectAudioIO.SetAudioIOToken(0);
       window.RedrawProject();
    }
-   if (mLastDrawnSelectedRegion != mViewInfo->selectedRegion) {
+   if (mLastDrawnSelectedRegion != mViewInfo->selectedRegion)
+   {
       UpdateSelectionDisplay();
    }
 
    // Notify listeners for timer ticks
    window.GetPlaybackScroller().OnTimer();
 
-   DrawOverlays(false);
-   mRuler->DrawOverlays(false);
-
-   if(IsAudioActive() && gAudioIO->GetNumCaptureChannels()) {
-
-      // Periodically update the display while recording
-
-      if ((mTimeCount % 5) == 0) {
-         // Must tell OnPaint() to recreate the backing bitmap
-         // since we've not done a full refresh.
-         mRefreshBacking = true;
-         Refresh( false );
-      }
-   }
-   if(mTimeCount > 1000)
-      mTimeCount = 0;
+   EnqueueRepaintIfRequired(false, *mPainter);
+   mRuler->EnqueueRepaintIfRequired(false, *mPainter);
 }
 
 void TrackPanel::OnProjectSettingsChange( wxCommandEvent &event )
@@ -457,7 +425,7 @@ void TrackPanel::OnProjectSettingsChange( wxCommandEvent &event )
    event.Skip();
    switch ( static_cast<ProjectSettings::EventCode>( event.GetInt() ) ) {
    case ProjectSettings::ChangedSyncLock:
-      Refresh(false);
+      RequestRefresh();
       break;
    default:
       break;
@@ -468,53 +436,26 @@ void TrackPanel::OnUndoReset(UndoRedoMessage message)
 {
    if (message.type == UndoRedoMessage::Reset) {
       TrackFocus::Get( *GetProject() ).Set( nullptr );
-      Refresh( false );
+      RequestRefresh();
    }
 }
 
 /// AS: OnPaint( ) is called during the normal course of
 ///  completing a repaint operation.
-void TrackPanel::OnPaint(wxPaintEvent & /* event */)
+void TrackPanel::HandlePaintEvent(wxPaintEvent & /* event */)
 {
    mLastDrawnSelectedRegion = mViewInfo->selectedRegion;
 
    auto sw =
       FrameStatistics::CreateStopwatch(FrameStatistics::SectionID::TrackPanel);
 
-   {
-      wxPaintDC dc(this);
+   auto paint = mPainter->Paint();
 
-      // Retrieve the damage rectangle
-      wxRect box = GetUpdateRegion().GetBox();
+   DrawTracks();
 
-      // Recreate the backing bitmap if we have a full refresh
-      // (See TrackPanel::Refresh())
-      if (mRefreshBacking || (box == GetRect()))
-      {
-         // Reset (should a mutex be used???)
-         mRefreshBacking = false;
-
-         // Redraw the backing bitmap
-         DrawTracks(&GetBackingDCForRepaint());
-
-         // Copy it to the display
-         DisplayBitmap(dc);
-      }
-      else
-      {
-         // Copy full, possibly clipped, damage rectangle
-         RepairBitmap(dc, box.x, box.y, box.width, box.height);
-      }
-
-      // Done with the clipped DC
-
-      // Drawing now goes directly to the client area.
-      // DrawOverlays() may need to draw outside the clipped region.
-      // (Used to make a NEW, separate wxClientDC, but that risks flashing
-      // problems on Mac.)
-      dc.DestroyClippingRegion();
-      DrawOverlays(true, &dc);
-   }
+   auto clipStateMutator = mPainter->GetClipStateMutator();
+   clipStateMutator.ResetClipRect();
+   DrawOverlays(true, *mPainter);
 }
 
 void TrackPanel::MakeParentRedrawScrollbars()
@@ -535,26 +476,25 @@ void TrackPanel::ProcessUIHandleResult
    (TrackPanelCell *pClickedCell, TrackPanelCell *pLatestCell,
     UIHandle::Result refreshResult)
 {
-   const auto panel = this;
-   auto pLatestTrack = FindTrack( pLatestCell ).get();
+   auto pLatestTrack = FindTrack( pLatestCell );
 
    // This precaution checks that the track is not only nonnull, but also
    // really owned by the track list
    auto pClickedTrack = GetTracks()->Lock(
       std::weak_ptr<Track>{ FindTrack( pClickedCell ) }
-   ).get();
+   );
 
    // TODO:  make a finer distinction between refreshing the track control area,
    // and the waveform area.  As it is, redraw both whenever you must redraw either.
 
    // Copy data from the underlying tracks to the pending tracks that are
    // really displayed
-   TrackList::Get( *panel->GetProject() ).UpdatePendingTracks();
+   TrackList::Get( *GetProject() ).UpdatePendingTracks();
 
    using namespace RefreshCode;
 
    if (refreshResult & DestroyedCell) {
-      panel->UpdateViewIfNoTracks();
+      UpdateViewIfNoTracks();
       // Beware stale pointer!
       if (pLatestTrack == pClickedTrack)
          pLatestTrack = NULL;
@@ -562,11 +502,11 @@ void TrackPanel::ProcessUIHandleResult
    }
 
    if (pClickedTrack && (refreshResult & RefreshCode::UpdateVRuler))
-      panel->UpdateVRuler(pClickedTrack);
+      UpdateVRuler(pClickedTrack.get());
 
    if (refreshResult & RefreshCode::DrawOverlays) {
-      panel->DrawOverlays(false);
-      mRuler->DrawOverlays(false);
+      RequestRefresh();
+      mRuler->RequestRefresh();
    }
 
    // Refresh all if told to do so, or if told to refresh a track that
@@ -577,22 +517,22 @@ void TrackPanel::ProcessUIHandleResult
        || ((refreshResult & RefreshLatestCell) && !pLatestTrack));
 
    if (refreshAll)
-      panel->Refresh(false);
+      RequestRefresh();
    else {
       if (refreshResult & RefreshCell)
-         panel->RefreshTrack(pClickedTrack);
+         RefreshTrack(pClickedTrack.get());
       if (refreshResult & RefreshLatestCell)
-         panel->RefreshTrack(pLatestTrack);
+         RefreshTrack(pLatestTrack.get());
    }
 
    if (refreshResult & FixScrollbars)
-      panel->MakeParentRedrawScrollbars();
+      MakeParentRedrawScrollbars();
 
    if (refreshResult & Resize)
-      panel->GetListener()->TP_HandleResize();
+      GetListener()->TP_HandleResize();
 
    if ((refreshResult & RefreshCode::EnsureVisible) && pClickedTrack) {
-      TrackFocus::Get(*GetProject()).Set(pClickedTrack);
+      TrackFocus::Get(*GetProject()).Set(pClickedTrack.get());
       pClickedTrack->EnsureVisible();
    }
 }
@@ -626,7 +566,7 @@ void TrackPanel::UpdateSelectionDisplay()
 {
    // Full refresh since the label area may need to indicate
    // newly selected tracks.
-   Refresh(false);
+   RequestRefresh();
 
    // Make sure the ruler follows suit.
    mRuler->DrawSelection();
@@ -712,16 +652,6 @@ void TrackPanel::OnKeyDown(wxKeyEvent & event)
 
 void TrackPanel::OnMouseEvent(wxMouseEvent & event)
 {
-   if (event.LeftDown()) {
-      // wxTimers seem to be a little unreliable, so this
-      // "primes" it to make sure it keeps going for a while...
-
-      // When this timer fires, we call TrackPanel::OnTimer and
-      // possibly update the screen for offscreen scrolling.
-      mTimer.Stop();
-      mTimer.Start(std::chrono::milliseconds{kTimerInterval}.count(), FALSE);
-   }
-
 
    if (event.ButtonUp()) {
       //EnsureVisible should be called after processing the up-click.
@@ -745,7 +675,7 @@ double TrackPanel::GetMostRecentXPos()
       MostRecentXCoord(), mViewInfo->GetLeftOffset());
 }
 
-void TrackPanel::RefreshTrack(Track *trk, bool refreshbacking)
+void TrackPanel::RefreshTrack(Track *trk)
 {
    if (!trk)
       return;
@@ -772,10 +702,7 @@ void TrackPanel::RefreshTrack(Track *trk, bool refreshbacking)
 
    wxRect rect(left, top, width, height);
 
-   if( refreshbacking )
-      mRefreshBacking = true;
-
-   Refresh( false, &rect );
+   RequestRefresh();
 }
 
 
@@ -786,19 +713,6 @@ void TrackPanel::RefreshTrack(Track *trk, bool refreshbacking)
 void TrackPanel::Refresh(bool eraseBackground /* = TRUE */,
                          const wxRect *rect /* = NULL */)
 {
-   // Tell OnPaint() to refresh the backing bitmap.
-   //
-   // Originally I had the check within the OnPaint() routine and it
-   // was working fine.  That was until I found that, even though a full
-   // refresh was requested, Windows only set the onscreen portion of a
-   // window as damaged.
-   //
-   // So, if any part of the trackpanel was off the screen, full refreshes
-   // didn't work and the display got corrupted.
-   if( !rect || ( *rect == GetRect() ) )
-   {
-      mRefreshBacking = true;
-   }
    wxWindow::Refresh(eraseBackground, rect);
 
    CallAfter([this]{ CellularPanel::HandleCursorForPresentMouseState(); } );
@@ -817,18 +731,16 @@ void TrackPanel::OnAudioIO(AudioIOEvent evt)
 /// Draw the actual track areas.  We only draw the borders
 /// and the little buttons and menues and whatnot here, the
 /// actual contents of each track are drawn by the TrackArtist.
-void TrackPanel::DrawTracks(wxDC * dc)
+void TrackPanel::DrawTracks()
 {
-   wxRegion region = GetUpdateRegion();
-
    const wxRect clip = GetRect();
 
    const SelectedRegion &sr = mViewInfo->selectedRegion;
    mTrackArtist->pSelectedRegion = &sr;
    mTrackArtist->pZoomInfo = mViewInfo;
-   TrackPanelDrawingContext context {
-      *dc, Target(), mLastMouseState, mTrackArtist.get()
-   };
+
+   TrackPanelDrawingContext context { *mPainter, Target(),
+                                      mLastMouseState, mTrackArtist.get() };
 
    // Don't draw a bottom margin here.
 
@@ -1086,11 +998,14 @@ namespace {
    };
 
 void GetTrackNameExtent(
-   wxDC &dc, const Track *t, wxCoord *pW, wxCoord *pH )
+   Painter &painter, const Track *t, wxCoord *pW, wxCoord *pH )
 {
    wxFont labelFont(12, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
-   dc.SetFont(labelFont);
-   dc.GetTextExtent( t->GetName(), pW, pH );
+
+   const auto size = painter.GetTextSize( audacity::ToUTF8(t->GetName()) );
+
+   *pW = static_cast<wxCoord>(size.width);
+   *pH = static_cast<wxCoord>(size.height);
 }
 
 wxRect GetTrackNameRect(
@@ -1117,10 +1032,12 @@ void DrawTrackName(
       return;
    if( !t->IsLeader())
       return;
-   auto &dc = context.dc;
+   auto& painter = context.painter;
+   auto stateMutator = painter.GetStateMutator();
+
    wxBrush Brush;
    wxCoord textWidth, textHeight;
-   GetTrackNameExtent( dc, t, &textWidth, &textHeight );
+   GetTrackNameExtent( painter, t, &textWidth, &textHeight );
 
    // Logic for name background translucency (aka 'shields')
    // Tracks less than kOpaqueHeight high will have opaque shields.
@@ -1144,44 +1061,13 @@ void DrawTrackName(
    const auto nameRect =
       GetTrackNameRect( leftOffset, rect, textWidth, textHeight );
 
-#ifdef __WXMAC__
-   // Mac dc is a graphics dc already.
-   AColor::UseThemeColour( &dc, clrTrackInfoSelected, clrTrackPanelText, opacity );
-   dc.DrawRoundedRectangle( nameRect, 8.0 );
-#else
-   // This little dance with wxImage in order to draw to a graphic dc
-   // which we can then paste as a translucent bitmap onto the real dc.
-   enum : int {
-      SecondMarginX = 1, SecondMarginY = 1,
-      SecondMarginsX = 2 * SecondMarginX, SecondMarginsY = 2 * SecondMarginY,
-   };
-   wxImage image(
-      textWidth + MarginsX + SecondMarginsX,
-      textHeight + MarginsY + SecondMarginsY );
-   image.InitAlpha();
-   unsigned char *alpha=image.GetAlpha();
-   memset(alpha, wxIMAGE_ALPHA_TRANSPARENT, image.GetWidth()*image.GetHeight());
+   AColor::UseThemeColour( stateMutator, clrTrackInfoSelected, clrTrackPanelText, opacity );
+   painter.DrawRoundedRect(nameRect.x, nameRect.y, nameRect.width, nameRect.height, 8.0);
 
-   {
-      std::unique_ptr< wxGraphicsContext >
-         pGc{ wxGraphicsContext::Create(image) };
-      auto &gc = *pGc;
-      // This is to a gc, not a dc.
-      AColor::UseThemeColour( &gc, clrTrackInfoSelected, clrTrackPanelText, opacity );
-      // Draw at 1,1, not at 0,0 to avoid clipping of the antialiasing.
-      gc.DrawRoundedRectangle(
-         SecondMarginX, SecondMarginY,
-         textWidth + MarginsX, textHeight + MarginsY, 8.0 );
-      // destructor of gc updates the wxImage.
-   }
-   wxBitmap bitmap( image );
-   dc.DrawBitmap( bitmap,
-      nameRect.x - SecondMarginX, nameRect.y - SecondMarginY );
-#endif
-   dc.SetTextForeground(theTheme.Colour( clrTrackPanelText ));
-   dc.DrawText(t->GetName(),
-      nameRect.x + MarginX,
-      nameRect.y + MarginY);
+   stateMutator.SetBrush(ColorFromWXColor(theTheme.Colour(clrTrackPanelText)));
+   painter.DrawText(
+      nameRect.x + MarginX, nameRect.y + MarginY,
+      audacity::ToUTF8(t->GetName()));
 }
 
 /*
@@ -1238,10 +1124,11 @@ struct EmptyCell final : CommonTrackPanelCell {
    {
       if ( iPass == TrackArtist::PassMargins ) {
          // Draw a margin area of TrackPanel
-         auto dc = &context.dc;
+         auto& painter = context.painter;
+         auto stateMutator = painter.GetStateMutator();
 
-         AColor::TrackPanelBackground( dc, false );
-         dc->DrawRectangle( rect );
+         AColor::TrackPanelBackground(stateMutator, false);
+         painter.DrawRect( rect.x, rect.y, rect.width, rect.height );
       }
    }
 };
@@ -1299,12 +1186,14 @@ struct VRulersAndChannels final : TrackPanelGroup {
       if ( iPass == TrackArtist::PassControls ) {
          if (mRefinement.size() > 1) {
             // Draw lines separating sub-views
-            auto &dc = context.dc;
-            AColor::CursorColor( &dc );
+            auto &painter = context.painter;
+            auto stateMutator = painter.GetStateMutator();
+
+            AColor::CursorColor( stateMutator );
             auto iter = mRefinement.begin() + 1, end = mRefinement.end();
             for ( ; iter != end; ++iter ) {
                auto yy = iter->first;
-               AColor::Line( dc, mLeftOffset, yy, rect.GetRight(), yy );
+               AColor::Line( painter, mLeftOffset, yy, rect.GetRight(), yy );
             }
          }
       }
@@ -1318,7 +1207,7 @@ struct VRulersAndChannels final : TrackPanelGroup {
       if ( iPass == TrackArtist::PassBorders ) {
          if ( true ) {
             wxCoord textWidth, textHeight;
-            GetTrackNameExtent( context.dc, mpTrack.get(),
+            GetTrackNameExtent( context.painter, mpTrack.get(),
                &textWidth, &textHeight );
             result =
                GetTrackNameRect( mLeftOffset, rect, textWidth, textHeight );
@@ -1351,11 +1240,13 @@ public:
    {
       if (iPass == TrackArtist::PassBackground)
       {
-         context.dc.SetPen(*wxTRANSPARENT_PEN);
-         AColor::UseThemeColour(&context.dc, mFillBrushName);
-         context.dc.DrawRectangle(rect);
+         auto stateMutator = context.painter.GetStateMutator();
+         stateMutator.SetPen(Pen::NoPen);
+
+         AColor::UseThemeColour(stateMutator, mFillBrushName);
+         context.painter.DrawRect(rect.x, rect.y, rect.width, rect.height);
          wxRect bevel(rect.x, rect.y, rect.width - 1, rect.height - 1);
-         AColor::BevelTrackInfo(context.dc, true, bevel, false);
+         AColor::BevelTrackInfo(context.painter, true, bevel, false);
       }
    }
 
@@ -1492,12 +1383,14 @@ struct LabeledChannelGroup final : TrackPanelGroup {
       const wxRect &rect, unsigned iPass ) override
    {
       if ( iPass == TrackArtist::PassBorders ) {
-         auto &dc = context.dc;
-         dc.SetBrush(*wxTRANSPARENT_BRUSH);
-         dc.SetPen(*wxBLACK_PEN);
+         auto &painter = context.painter;
+         auto stateMutator = painter.GetStateMutator();
+
+         stateMutator.SetBrush(Brush::NoBrush);
+         stateMutator.SetPen(Pen(Colors::Black));
 
          // border
-         dc.DrawRectangle(
+         painter.DrawRect(
             rect.x, rect.y,
             rect.width - kShadowThickness, rect.height - kShadowThickness
          );
@@ -1509,9 +1402,9 @@ struct LabeledChannelGroup final : TrackPanelGroup {
          const auto bottom = rect.GetBottom();
 
          // bottom
-         AColor::Line(dc, rect.x + 2, bottom, right, bottom);
+         AColor::Line(painter, rect.x + 2, bottom, right, bottom);
          // right
-         AColor::Line(dc, right, rect.y + 2, right, bottom);
+         AColor::Line(painter, right, rect.y + 2, right, bottom);
       }
       if ( iPass == TrackArtist::PassFocus ) {
          // Sometimes highlight is not drawn on backing bitmap. I thought
@@ -1527,19 +1420,22 @@ struct LabeledChannelGroup final : TrackPanelGroup {
              wxWindow::FindFocus() == &trackPanel ) {
             /// Draw a three-level highlight gradient around the focused track.
             wxRect theRect = rect;
-            auto &dc = context.dc;
-            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            auto &painter = context.painter;
+            auto stateMutator = painter.GetStateMutator();
 
-            AColor::TrackFocusPen( &dc, 2 );
-            dc.DrawRectangle(theRect);
+            stateMutator.SetBrush(Brush::NoBrush);
+
+            AColor::TrackFocusPen( stateMutator, 2 );
+            painter.DrawRect(theRect.x, theRect.y, theRect.width, theRect.height);
             theRect.Deflate(1);
 
-            AColor::TrackFocusPen( &dc, 1 );
-            dc.DrawRectangle(theRect);
+            AColor::TrackFocusPen( stateMutator, 1 );
+            painter.DrawRect(theRect.x, theRect.y, theRect.width, theRect.height);
             theRect.Deflate(1);
 
-            AColor::TrackFocusPen( &dc, 0 );
-            dc.DrawRectangle(theRect);
+            AColor::TrackFocusPen( stateMutator, 0 );
+            painter.DrawRect(
+               theRect.x, theRect.y, theRect.width, theRect.height);
          }
       }
    }

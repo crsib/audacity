@@ -11,14 +11,22 @@
 #ifndef __AUDACITY_RULER__
 #define __AUDACITY_RULER__
 
+#include <memory>
+
 #include "wxPanelWrapper.h" // to inherit
 #include "NumberScale.h" // member variable
 
 #include <wx/colour.h> // member variable
 #include <wx/pen.h> // member variable
 
-class wxDC;
 class wxFont;
+
+namespace graphics
+{
+class Painter;
+class PainterStateMutator;
+class PainterFont;
+} // namespace graphics
 
 class Envelope;
 class ZoomInfo;
@@ -137,12 +145,12 @@ class AUDACITY_DLL_API Ruler {
    //
 
    // Note that it will not erase for you...
-   void Draw(wxDC& dc) const;
-   void Draw(wxDC& dc, const Envelope* envelope) const;
+   void Draw(graphics::Painter& painter) const;
+   void Draw(graphics::Painter& painter, const Envelope* envelope) const;
    // If length <> 0, draws lines perpendiculars to ruler corresponding
    // to selected ticks (major, minor, or both), in an adjacent window.
    // You may need to use the offsets if you are using part of the dc for rulers, borders etc.
-   void DrawGrid(wxDC& dc, int length, bool minor = true, bool major = true, int xOffset = 0, int yOffset = 0) const;
+   void DrawGrid(graphics::Painter& painter, int length, bool minor = true, bool major = true, int xOffset = 0, int yOffset = 0) const;
 
    // So we can have white ticks on black...
    void SetTickColour( const wxColour & colour)
@@ -150,6 +158,8 @@ class AUDACITY_DLL_API Ruler {
 
    // Force regeneration of labels at next draw time
    void Invalidate();
+
+   graphics::Painter& GetPainter(wxWindow* wnd);
 
  private:
    struct TickSizes;
@@ -161,15 +171,15 @@ class AUDACITY_DLL_API Ruler {
       int lx, ly;
       TranslatableString text;
 
-      void Draw(wxDC &dc, bool twoTone, wxColour c) const;
+      void Draw(graphics::Painter& dc, bool twoTone, wxColour c) const;
    };
    using Labels = std::vector<Label>;
 
    using Bits = std::vector< bool >;
 
-   void ChooseFonts( wxDC &dc ) const;
+   void ChooseFonts(graphics::Painter& dc) const;
 
-   void UpdateCache( wxDC &dc, const Envelope* envelope ) const;
+   void UpdateCache(graphics::Painter& dc, const Envelope* envelope) const;
 
    struct Updater;
    
@@ -178,6 +188,9 @@ public:
    bool mbTicksAtExtremes;
 
 private:
+   graphics::Painter& GetPainter() const;
+   std::shared_ptr<graphics::Painter> mPainter;
+
    wxColour mTickColour;
    wxPen mPen;
 
@@ -187,15 +200,24 @@ private:
    std::unique_ptr<Fonts> mpUserFonts;
    mutable std::unique_ptr<Fonts> mpFonts;
 
+   struct PainterFonts final
+   {
+      std::shared_ptr<graphics::PainterFont> major;
+      std::shared_ptr<graphics::PainterFont> minor;
+      std::shared_ptr<graphics::PainterFont> minorMinor; 
+   };
+
+   mutable std::unique_ptr<PainterFonts> mpPainterFonts;
+
    double       mMin, mMax;
    double       mHiddenMin, mHiddenMax;
 
    Bits mUserBits;
 
    static std::pair< wxRect, Label > MakeTick(
-      Label lab,
-      wxDC &dc, wxFont font,
-      std::vector<bool> &bits,
+      Label lab, graphics::Painter& painter,
+      const std::shared_ptr<graphics::PainterFont>& font,
+      std::vector<bool>& bits,
       int left, int top, int spacing, int lead,
       bool flip, int orientation );
 

@@ -47,6 +47,14 @@
 #include "../WaveTrack.h"
 #include "AllThemeResources.h"
 
+#include "graphics/Painter.h"
+#include "graphics/WXPainterUtils.h"
+#include "graphics/WXColor.h"
+#include "graphics/WXPainterFactory.h"
+
+using namespace graphics;
+using namespace graphics::wx;
+
 enum
 {
    ID_Threshold = 10000,
@@ -621,21 +629,21 @@ BEGIN_EVENT_TABLE(EffectCompressorPanel, wxPanelWrapper)
    EVT_SIZE(EffectCompressorPanel::OnSize)
 END_EVENT_TABLE()
 
-EffectCompressorPanel::EffectCompressorPanel(wxWindow *parent, wxWindowID winid,
-                                             double & threshold,
-                                             double & noiseFloor,
-                                             double & ratio)
-:  wxPanelWrapper(parent, winid),
-   threshold(threshold),
-   noiseFloor(noiseFloor),
-   ratio(ratio)
+EffectCompressorPanel::EffectCompressorPanel(
+   wxWindow* parent, wxWindowID winid, double& threshold, double& noiseFloor,
+   double& ratio)
+    : wxPanelWrapper(parent, winid)
+    , mPainter(CreatePainter(this))
+    , threshold(threshold)
+    , noiseFloor(noiseFloor)
+    , ratio(ratio)
 {
 }
 
 void EffectCompressorPanel::OnPaint(wxPaintEvent & WXUNUSED(evt))
 {
-   wxPaintDC dc(this);
-
+   auto paintEvent = mPainter->Paint();
+   
    int width, height;
    GetSize(&width, &height);
 
@@ -668,9 +676,7 @@ void EffectCompressorPanel::OnPaint(wxPaintEvent & WXUNUSED(evt))
    vRuler.SetTickColour( theTheme.Colour( clrGraphLabels ));
    hRuler.SetTickColour( theTheme.Colour( clrGraphLabels ));
 
-#if defined(__WXMSW__)
-   dc.Clear();
-#endif
+   mPainter->Clear(ColorFromWXColor(GetBackgroundColour()));
 
    wxRect border;
    border.x = w;
@@ -678,9 +684,12 @@ void EffectCompressorPanel::OnPaint(wxPaintEvent & WXUNUSED(evt))
    border.width = width - w;
    border.height = height - h + 1;
 
-   dc.SetBrush(*wxWHITE_BRUSH);
-   dc.SetPen(*wxBLACK_PEN);
-   dc.DrawRectangle(border);
+   auto stateMutator = mPainter->GetStateMutator();
+
+   stateMutator.SetBrush(Colors::White);
+   stateMutator.SetPen(Colors::Black);
+
+   mPainter->DrawRect(RectFromWXRect(border));
 
    wxRect envRect = border;
    envRect.Deflate( 2, 2 );
@@ -691,39 +700,24 @@ void EffectCompressorPanel::OnPaint(wxPaintEvent & WXUNUSED(evt))
    int finalY = envRect.height;
    int startY = lrint((threshold*(1.0/ratio-1.0))*envRect.height/rangeDB);
 
-   // Yellow line for threshold
-/*   dc.SetPen(wxPen(wxColour(220, 220, 0), 1, wxSOLID));
-   AColor::Line(dc,
-                envRect.x,
-                envRect.y + envRect.height - kneeY,
-                envRect.x + envRect.width - 1,
-                envRect.y + envRect.height - kneeY);*/
+   auto path = mPainter->CreatePath();
 
-   // Was: Nice dark red line for the compression diagram
-//   dc.SetPen(wxPen(wxColour(180, 40, 40), 3, wxSOLID));
+   path->MoveTo(envRect.x, envRect.y + envRect.height - startY);
+   path->LineTo(envRect.x + kneeX, envRect.y + envRect.height - kneeY);
+   path->LineTo(envRect.x + envRect.width, envRect.y + envRect.height - finalY);
 
-   // Nice blue line for compressor, same color as used in the waveform envelope.
-   dc.SetPen( AColor::WideEnvelopePen) ;
-
-   AColor::Line(dc,
-                envRect.x,
-                envRect.y + envRect.height - startY,
-                envRect.x + kneeX - 1,
-                envRect.y + envRect.height - kneeY);
-
-   AColor::Line(dc,
-                envRect.x + kneeX,
-                envRect.y + envRect.height - kneeY,
-                envRect.x + envRect.width - 1,
-                envRect.y + envRect.height - finalY);
+   // Nice blue line for compressor, same color as used in the waveform
+   // envelope.
+   stateMutator.SetPen(PenFromWXPen(AColor::WideEnvelopePen));
+   stateMutator.SetBrush(Brush::NoBrush);
+   mPainter->DrawPath(*path);
 
    // Paint border again
-   dc.SetBrush(*wxTRANSPARENT_BRUSH);
-   dc.SetPen(*wxBLACK_PEN);
-   dc.DrawRectangle(border);
+   stateMutator.SetPen(Colors::Black);
+   mPainter->DrawRect(RectFromWXRect(border));
 
-   vRuler.Draw(dc);
-   hRuler.Draw(dc);
+   vRuler.Draw(*mPainter);
+   hRuler.Draw(*mPainter);
 }
 
 void EffectCompressorPanel::OnSize(wxSizeEvent & WXUNUSED(evt))

@@ -13,9 +13,9 @@
 
 #include <chrono>
 #include <vector>
+#include <memory>
 
 #include <wx/setup.h> // for wxUSE_* macros
-#include <wx/timer.h> // to inherit
 
 #include "HitTestResult.h"
 #include "Prefs.h"
@@ -52,9 +52,12 @@ class TrackPanelListener;
 
 struct TrackPanelDrawingContext;
 
-enum class UndoPush : unsigned char;
+namespace graphics
+{
+class Painter;
+}
 
-static constexpr auto  kTimerInterval = std::chrono::milliseconds{50};
+enum class UndoPush : unsigned char;
 
 const int DragThreshold = 3;// Anything over 3 pixels is a drag, else a click.
 
@@ -67,7 +70,7 @@ class AUDACITY_DLL_API TrackPanel final
    static TrackPanel &Get( AudacityProject &project );
    static const TrackPanel &Get( const AudacityProject &project );
    static void Destroy( AudacityProject &project );
- 
+
    TrackPanel(wxWindow * parent,
               wxWindowID id,
               const wxPoint & pos,
@@ -83,7 +86,7 @@ class AUDACITY_DLL_API TrackPanel final
 
    void OnAudioIO(AudioIOEvent);
 
-   void OnPaint(wxPaintEvent & event);
+   void HandlePaintEvent(wxPaintEvent& event) override;
    void OnMouseEvent(wxMouseEvent & event);
    void OnKeyDown(wxKeyEvent & event);
 
@@ -96,7 +99,6 @@ class AUDACITY_DLL_API TrackPanel final
 
    void OnSize( wxSizeEvent & );
    void OnIdle(wxIdleEvent & event);
-   void OnTimer(wxTimerEvent& event);
    void OnProjectSettingsChange(wxCommandEvent &event);
    void OnTrackFocusChange(struct TrackFocusChangeMessage);
 
@@ -106,7 +108,7 @@ class AUDACITY_DLL_API TrackPanel final
       (bool eraseBackground = true, const wxRect *rect = (const wxRect *) NULL)
       override;
 
-   void RefreshTrack(Track *trk, bool refreshbacking = true);
+   void RefreshTrack(Track *trk);
 
    void HandlePageUpKey();
    void HandlePageDownKey();
@@ -172,7 +174,7 @@ public:
    AdornedRulerPanel * GetRuler(){ return mRuler;}
 
 protected:
-   void DrawTracks(wxDC * dc);
+   void DrawTracks();
 
 public:
    // Set the object that performs catch-all event handling when the pointer
@@ -199,27 +201,6 @@ protected:
 
    std::unique_ptr<TrackArtist> mTrackArtist;
 
-   class AUDACITY_DLL_API AudacityTimer final : public wxTimer {
-   public:
-     void Notify() override{
-       // (From Debian)
-       //
-       // Don't call parent->OnTimer(..) directly here, but instead post
-       // an event. This ensures that this is a pure wxWidgets event
-       // (no GDK event behind it) and that it therefore isn't processed
-       // within the YieldFor(..) of the clipboard operations (workaround
-       // for Debian bug #765341).
-       // QueueEvent() will take ownership of the event
-       parent->GetEventHandler()->QueueEvent(safenew wxTimerEvent(*this));
-     }
-     TrackPanel *parent;
-   } mTimer;
-
-   int mTimeCount;
-
-   bool mRefreshBacking;
-
-
 protected:
 
    SelectedRegion mLastDrawnSelectedRegion {};
@@ -235,6 +216,8 @@ protected:
        unsigned refreshResult) override;
 
    void UpdateStatusMessage( const TranslatableString &status ) override;
+
+   std::unique_ptr<graphics::Painter> mPainter;
 };
 
 #endif

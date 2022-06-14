@@ -22,6 +22,11 @@ struct AudioIOEvent;
 struct SelectedRegionEvent;
 class TrackList;
 
+namespace graphics
+{
+class Painter;
+}
+
 // This is an Audacity Specific ruler panel.
 class AUDACITY_DLL_API AdornedRulerPanel final
 : public CellularPanel
@@ -75,14 +80,14 @@ public:
    //void OnToggleScrubRulerFromMenu(wxCommandEvent& );
    bool SetPanelSize();
    
-   void DrawBothOverlays();
+   void RequestFullRefresh();
 
 
 private:
    void DoIdle();
    void OnIdle( wxIdleEvent &evt );
    void OnAudioStartStop(AudioIOEvent);
-   void OnPaint(wxPaintEvent &evt);
+   void HandlePaintEvent(wxPaintEvent &evt) override;
    void OnSize(wxSizeEvent &evt);
    void OnLeave(wxMouseEvent &evt);
    void OnThemeChange(struct ThemeChangeMessage);
@@ -95,21 +100,21 @@ private:
    void StartQPPlay(
       bool newDefault, bool cutPreview, const double *pStartTime = nullptr);
 
-   void DoDrawBackground(wxDC * dc);
-   void DoDrawEdge(wxDC *dc);
-   void DoDrawMarks(wxDC * dc, bool /*text */ );
+   void DoDrawBackground(graphics::Painter& painter);
+   void DoDrawEdge(graphics::Painter& painter);
+   void DoDrawMarks(graphics::Painter& painter, bool /*text */);
    wxRect RegionRectangle(double t0, double t1) const;
    wxRect PlayRegionRectangle() const;
    wxRect SelectedRegionRectangle() const;
-   void DoDrawPlayRegion(wxDC * dc,
+   void DoDrawPlayRegion(graphics::Painter& painter,
       const wxRect &rectP, const wxRect &rectL, const wxRect &rectR);
-   void DoDrawPlayRegionLimits(wxDC * dc, const wxRect &rect);
-   void DoDrawOverlap(wxDC * dc, const wxRect &rect);
-   void DoDrawSelection(wxDC * dc,
+   void DoDrawPlayRegionLimits(graphics::Painter& painter, const wxRect& rect);
+   void DoDrawOverlap(graphics::Painter& painter, const wxRect& rect);
+   void DoDrawSelection(graphics::Painter& painter,
       const wxRect &rectS, const wxRect &rectL, const wxRect &rectR);
 
 public:
-   void DoDrawScrubIndicator(wxDC * dc, wxCoord xx, int width, bool scrub, bool seek);
+   void DoDrawScrubIndicator(graphics::Painter& painter, wxCoord xx, int width, bool scrub, bool seek);
    void UpdateButtonStates();
 
 private:
@@ -132,8 +137,8 @@ private:
    bool IsWithinMarker(int mousePosX, double markerTime);
 
 private:
-
    Ruler mRuler;
+   graphics::Painter& mPainter;
    AudacityProject *const mProject;
    TrackList *mTracks;
 

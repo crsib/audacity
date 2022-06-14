@@ -216,7 +216,7 @@ void OnCut(const CommandContext &context)
    for (auto lt : tracks.Selected< LabelTrack >()) {
       auto &view = LabelTrackView::Get( *lt );
       if (view.CutSelectedText( context.project )) {
-         trackPanel.Refresh(false);
+         trackPanel.RequestRefresh();
          return;
       }
    }
@@ -226,7 +226,7 @@ void OnCut(const CommandContext &context)
    for (auto wt : tracks.Any<WaveTrack>()) {
       auto& view = WaveTrackView::Get(*wt);
       if (view.CutSelectedText(context.project)) {
-         trackPanel.Refresh(false);
+         trackPanel.RequestRefresh();
          return;
       }
    }
@@ -296,7 +296,7 @@ void OnCut(const CommandContext &context)
 
    // Bug 1663
    //mRuler->ClearPlayRegion();
-   ruler.DrawOverlays( true );
+   ruler.RequestRefresh();
 }
 
 void OnDelete(const CommandContext &context)
@@ -335,7 +335,7 @@ void OnCopy(const CommandContext &context)
    for (auto lt : tracks.Selected< LabelTrack >()) {
       auto &view = LabelTrackView::Get( *lt );
       if (view.CopySelectedText( context.project )) {
-         //trackPanel.Refresh(false);
+         //trackPanel.RequestRefresh();
          return;
       }
    }
@@ -367,7 +367,7 @@ void OnCopy(const CommandContext &context)
       selectedRegion.t0(), selectedRegion.t1(), project.shared_from_this() );
 
    //Make sure the menus/toolbar states get updated
-   trackPanel.Refresh(false);
+   trackPanel.RequestRefresh();
 }
 
 std::pair<double, double> FindSelection(const CommandContext &context)
@@ -413,7 +413,7 @@ void OnPaste(const CommandContext &context)
    for (auto wt : tracks.Any<WaveTrack>()) {
       auto& view = WaveTrackView::Get(*wt);
       if (view.PasteText(context.project)) {
-         trackPanel.Refresh(false);
+         trackPanel.RequestRefresh();
          return;
       }
    }

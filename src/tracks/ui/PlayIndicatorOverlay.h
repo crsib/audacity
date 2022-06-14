@@ -32,8 +32,9 @@ public:
 
 private:
    unsigned SequenceNumber() const override;
-   std::pair<wxRect, bool> DoGetRectangle(wxSize size) override;
-   void Draw(OverlayPanel &panel, wxDC &dc) override;
+   std::pair<wxRect, bool>
+   DoGetRectangle(graphics::Painter& painter, wxSize size) override;
+   void Draw(OverlayPanel& panel, graphics::Painter& painter) override;
 
 protected:
 
