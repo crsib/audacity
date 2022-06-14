@@ -14,6 +14,8 @@ set( SOURCES
    PixelSampleMapper.cpp
    PixelSampleMapper.h
 
+   graphics/PathTriangulation.cpp
+   graphics/PathTriangulation.h
    graphics/Point.h
    graphics/Rect.h
    graphics/Size.h
