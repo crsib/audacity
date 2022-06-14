@@ -5,6 +5,14 @@ A library responsible for custom rendering in Audacity: wxWidgets specific code.
 set( SOURCES
    graphics/WXColor.cpp
    graphics/WXColor.h
+   graphics/WXFontUtils.cpp
+   graphics/WXFontUtils.h
+   graphics/WXGraphicsContextPainter.cpp
+   graphics/WXGraphicsContextPainter.h
+   graphics/WXPainterFactory.cpp
+   graphics/WXPainterFactory.h
+   graphics/WXPainterUtils.cpp
+   graphics/WXPainterUtils.h
 
    waveform/WaveBitmapCache.cpp
    waveform/WaveBitmapCache.h
@@ -19,6 +27,7 @@ set( LIBRARIES
       wxwidgets::base
       wxwidgets::core
 )
+
 audacity_library( lib-graphics-wx "${SOURCES}" "${LIBRARIES}"
    "" ""
 )
