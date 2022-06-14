@@ -18,9 +18,17 @@
 #include <wx/brush.h> // member variable
 #include <wx/pen.h> // member variable
 
+#include "graphics/Point.h"
+
 class wxDC;
 class wxGraphicsContext;
 class wxRect;
+
+namespace graphics
+{
+class Painter;
+class PainterStateMutator;
+} // namespace graphics
 
 class THEME_API AColor {
  public:
@@ -37,14 +45,14 @@ class THEME_API AColor {
    static void Init();
    static void ReInit();
 
-   static void Arrow(wxDC & dc, wxCoord x, wxCoord y, int width, bool down = true);
+   static void Arrow(wxDC& dc, wxCoord x, wxCoord y, int width, bool down = true);
 
    // Draw a line, INCLUSIVE of both endpoints
    // (unlike what wxDC::DrawLine() documentation specifies)
-   static void Line(wxDC & dc, wxCoord x1, wxCoord y1, wxCoord x2, wxCoord y2);
+   static void Line(wxDC& dc, wxCoord x1, wxCoord y1, wxCoord x2, wxCoord y2);
 
    // Draw lines, INCLUSIVE of all endpoints
-   static void Lines(wxDC &dc, size_t nPoints, const wxPoint points[]);
+   static void Lines(wxDC& dc, size_t nPoints, const wxPoint points[]);
 
    static void DrawFocus(wxDC & dc, wxRect & r);
    static void Bevel(wxDC & dc, bool up, const wxRect & r);
@@ -82,6 +90,66 @@ class THEME_API AColor {
 
    static void TrackFocusPen(wxDC * dc, int level /* 0 - 2 */);
    static void SnapGuidePen(wxDC * dc);
+
+   static void Arrow(graphics::Painter& painter, wxCoord x, wxCoord y, int width, bool down = true);
+
+   // Draw a line, INCLUSIVE of both endpoints
+   // (unlike what wxDC::DrawLine() documentation specifies)
+   static void
+   Line(graphics::Painter& painter, wxCoord x1, wxCoord y1, wxCoord x2, wxCoord y2);
+
+   // Draw lines, INCLUSIVE of all endpoints
+   static void Lines(graphics::Painter& painter, size_t nPoints, const graphics::Point points[]);
+
+   static void DrawFocus(graphics::Painter& painter, wxRect& r);
+   static void Bevel(graphics::Painter& painter, bool up, const wxRect& r);
+   static void Bevel2(
+      graphics::Painter& painter, bool up, const wxRect& r, bool bSel = false,
+      bool bHighlight = false);
+   /**
+    * \brief Draw a button that fills a given rect
+    */
+   static void ButtonStretch(
+      graphics::Painter& painter, bool up, const wxRect& r, bool selected = false,
+      bool highlight = false);
+   static void BevelTrackInfo(
+      graphics::Painter& painter, bool up, const wxRect& r, bool highlight = false);
+
+   static void UseThemeColour(
+      graphics::PainterStateMutator& mutator, int iBrush, int iPen = -1, int alpha = 255);
+
+   static void
+   TrackPanelBackground(graphics::PainterStateMutator& mutator, bool selected);
+
+   static void
+   Light(graphics::PainterStateMutator& mutator, bool selected, bool highlight = false);
+   static void Medium(graphics::PainterStateMutator& mutator, bool selected);
+   static void MediumTrackInfo(graphics::PainterStateMutator& mutator, bool selected);
+   static void
+   Dark(graphics::PainterStateMutator& mutator, bool selected, bool highlight = false);
+
+   static void CursorColor(graphics::PainterStateMutator& mutator);
+   static void
+   IndicatorColor(graphics::PainterStateMutator& mutator, bool bIsNotRecording);
+
+   static void
+   Mute(graphics::PainterStateMutator& mutator, bool on, bool selected, bool soloing);
+   static void Solo(graphics::PainterStateMutator& mutator, bool on, bool selected);
+
+   // In all of these, channel is 1-indexed (1 through 16); if out of bounds
+   // (either due to being explicitly set to 0 or due to an allegro file with
+   // more than 16 channels) a gray color is returned.
+
+   static void
+   MIDIChannel(graphics::PainterStateMutator& mutator, int channel /* 1 - 16 */);
+   static void
+   LightMIDIChannel(graphics::PainterStateMutator& mutator, int channel /* 1 - 16 */);
+   static void
+   DarkMIDIChannel(graphics::PainterStateMutator& mutator, int channel /* 1 - 16 */);
+
+   static void
+   TrackFocusPen(graphics::PainterStateMutator& mutator, int level /* 0 - 2 */);
+   static void SnapGuidePen(graphics::PainterStateMutator& mutator);
 
    static void PreComputeGradient();
 
