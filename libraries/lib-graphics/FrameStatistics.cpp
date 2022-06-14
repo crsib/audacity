@@ -94,9 +94,6 @@ FrameStatistics::CreateStopwatch(SectionID section) noexcept
       auto& instance = GetInstance();
 
       instance.mSections[size_t(SectionID::WaveformView)] = {};
-      instance.mSections[size_t(SectionID::WaveDataCache)] = {};
-      instance.mSections[size_t(SectionID::WaveBitmapCachePreprocess)] = {};
-      instance.mSections[size_t(SectionID::WaveBitmapCache)] = {};
    }
 
    return Stopwatch(section);
