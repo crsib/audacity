@@ -4,6 +4,7 @@ add_unit_test(
    SOURCES
       GraphicsDataCacheTests.cpp
       GraphicsObjectCacheTests.cpp
+      TransformTests.cpp
    LIBRARIES
       lib-graphics
       lib-screen-geometry-interface

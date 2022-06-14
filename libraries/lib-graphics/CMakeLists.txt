@@ -14,6 +14,10 @@ set( SOURCES
    PixelSampleMapper.cpp
    PixelSampleMapper.h
 
+   graphics/Point.h
+   graphics/Rect.h
+   graphics/Size.h
+   graphics/Transform.h
    waveform/WaveData.cpp
    waveform/WaveData.h
    waveform/WaveDataCache.cpp
