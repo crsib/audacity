@@ -43,6 +43,12 @@ class wxColour;
 class wxImage;
 class wxPen;
 
+namespace graphics
+{
+class Painter;
+class PainterImage;
+} // namespace graphics
+
 class ChoiceSetting;
 
 // JKC: will probably change name from 'teBmps' to 'tIndexBmp';
@@ -174,11 +180,16 @@ public:
    void RecolourBitmap( int iIndex, wxColour From, wxColour To );
    void RecolourTheme();
 
-   int ColourDistance( wxColour & From, wxColour & To );
+   int ColourDistance( const wxColour & From, const wxColour & To );
    wxColour & Colour( int iIndex );
    wxBitmap & Bitmap( int iIndex );
    wxImage  & Image( int iIndex );
    wxSize ImageSize( int iIndex );
+
+   std::shared_ptr<graphics::PainterImage>
+   GetPainterImage(graphics::Painter& painter, int index, int x = 0, int y = 0, int w = 0, int h = 0);
+
+   void ReleasePainterImages();
 
    void ReplaceImage( int iIndex, wxImage * pImage );
    void RotateImageInto( int iTo, int iFrom, bool bClockwise );
@@ -205,6 +216,9 @@ protected:
 
    std::map<Identifier, ThemeSet> mSets;
    ThemeSet *mpSet = nullptr;
+
+   class PainterImageCache;
+   std::unique_ptr<PainterImageCache> mPainterImageCache;
 };
 
 class THEME_API Theme final : public ThemeBase

@@ -150,6 +150,8 @@ It handles initialization and termination by subclassing wxApp.
 #include "effects/ScoreAlignDialog.h"
 #endif
 
+#include "graphics/WXPainterFactory.h"
+
 #if 0
 #ifdef _DEBUG
     #ifdef _MSC_VER
@@ -2241,6 +2243,9 @@ int AudacityApp::OnExit()
 
    // Terminate the PluginManager (must be done before deleting the locale)
    PluginManager::Get().Terminate();
+
+   theTheme.ReleasePainterImages();
+   graphics::wx::ShutdownRenderingSystem();
 
    return 0;
 }
