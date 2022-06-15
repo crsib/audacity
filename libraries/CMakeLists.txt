@@ -32,6 +32,7 @@ set( LIBRARIES
    lib-graphics
    lib-graphics-wx
    lib-graphics-fonts
+   lib-graphics-gl
 )
 
 if (WIN32)

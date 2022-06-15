@@ -18,7 +18,9 @@ set( SOURCES
    # Additional rendering backend loaders
    ########################################
    $<$<PLATFORM_ID:Windows>:loaders/D2DLoader.cpp>
+   loaders/GLLoader.cpp
 )
+
 set( LIBRARIES
    PUBLIC
       lib-graphics-interface
@@ -26,6 +28,7 @@ set( LIBRARIES
       lib-math-interface
       lib-screen-geometry-interface
       $<$<PLATFORM_ID:Windows>:lib-graphics-d2d-interface>
+      lib-graphics-gl-interface
       wxwidgets::base
       wxwidgets::core
 )
