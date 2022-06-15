@@ -3,13 +3,16 @@
 
   Audacity: A Digital Audio Editor
 
-  Color.cpp
+  Renderer.cpp
 
   Dmitry Vedenko
 
 **********************************************************************/
-#include "Color.h"
+#include "Renderer.h"
 
 namespace graphics
 {
+Renderer::~Renderer() noexcept
+{
 }
+} // namespace graphics

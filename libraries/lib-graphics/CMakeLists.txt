@@ -14,10 +14,24 @@ set( SOURCES
    PixelSampleMapper.cpp
    PixelSampleMapper.h
 
+   graphics/Brush.cpp
+   graphics/Brush.h
+   graphics/Color.cpp
+   graphics/Color.h
+   graphics/FontInfo.cpp
+   graphics/FontInfo.h
+   graphics/Painter.cpp
+   graphics/Painter.h
+   graphics/Pen.cpp
+   graphics/Pen.h
    graphics/PathTriangulation.cpp
    graphics/PathTriangulation.h
    graphics/Point.h
    graphics/Rect.h
+   graphics/Renderer.cpp
+   graphics/Renderer.h
+   graphics/RendererID.cpp
+   graphics/RendererID.h
    graphics/Size.h
    graphics/Transform.h
    waveform/WaveData.cpp
