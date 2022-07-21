@@ -297,6 +297,18 @@ function ( _conan_install build_type )
         # Without it, libjpeg-turbo will fail to cross-compile on AppleSilicon macs
         set(ENV{CONAN_CMAKE_SYSTEM_NAME} "Darwin")
         set(ENV{CONAN_CMAKE_SYSTEM_PROCESSOR} ${MACOS_ARCHITECTURE})
+    elseif (CMAKE_TOOLCHAIN_FILE )
+      set(ENV{CONAN_CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_NAME})
+      set(ENV{CONAN_CMAKE_TOOLCHAIN_FILE} ${CMAKE_TOOLCHAIN_FILE})
+      set(ENV{CONAN_CMAKE_SYSTEM_PROCESSOR} ${CMAKE_SYSTEM_PROCESSOR})
+
+      if (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|aarch64_be|armv8b|armv8l")
+        set(CONAN_ARCH "armv8")
+      else()
+         set(CONAN_ARCH ${CMAKE_SYSTEM_PROCESSOR})
+      endif()
+
+      list( APPEND settings arch=${CONAN_ARCH} )
     endif()
 
     if (build_type MATCHES "MinSizeRel|RelWithDebInfo")

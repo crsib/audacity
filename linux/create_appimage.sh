@@ -11,6 +11,15 @@ readonly appimage="$2" # output path to use for created AppImage
 # Helper functions
 #============================================================================
 
+function cross_run()
+{
+  if [ -z "$CROSS_ARCH" ]; then
+    $@
+  else
+    qemu-${CROSS_ARCH}-static $@
+  fi
+}
+
 function download_github_release()
 {
     local -r repo_slug="$1" release_tag="$2" file="$3"
@@ -35,6 +44,13 @@ function download_appimage_release()
     local -r image="${binary_name}-x86_64.AppImage"
     download_github_release "${github_repo_slug}" "${tag}" "${image}"
     extract_appimage "${image}" "${binary_name}"
+}
+
+function download_appimage_runtime()
+{
+    local -r github_repo_slug="$1" binary_name="$2" tag="$3"
+    local -r image="${binary_name}-${CROSS_ARCH}.AppImage"
+    download_github_release "${github_repo_slug}" "${tag}" "${image}"
 }
 
 function download_linuxdeploy_component()
@@ -62,6 +78,16 @@ if create_path "appimagetool"; then
     download_appimage_release AppImage/AppImageKit appimagetool continuous
 )
 fi
+
+if [ ! -z "$CROSS_ARCH" ]; then
+    if create_path "appimagetool-${CROSS_ARCH}"; then
+    (
+        cd "appimagetool-${CROSS_ARCH}"
+        download_appimage_runtime AppImage/AppImageKit appimagetool continuous
+    )
+    fi
+fi
+
 export PATH="${PWD%/}/appimagetool:${PATH}"
 appimagetool --version
 
@@ -73,7 +99,7 @@ if create_path "linuxdeploy"; then
 fi
 
 export PATH="${PWD%/}/linuxdeploy:${PATH}"
-linuxdeploy --list-plugins
+cross_run ${PWD%/}/linuxdeploy/linuxdeploy --list-plugins
 
 #============================================================================
 # Create symlinks
@@ -120,7 +146,11 @@ mv "${appdir}/../findlib" "${appdir}/bin/findlib"
 function find_library()
 {
   # Print full path to a library or return exit status 1 if not found
-  "${appdir}/bin/findlib" "$@"
+  if [ -z "$CROSS_ARCH" ]; then
+    "${appdir}/bin/findlib" "$@"
+  else
+    qemu-${CROSS_ARCH}-static "${appdir}/bin/findlib" "$@"
+  fi
 }
 
 function fallback_library()
@@ -129,11 +159,14 @@ function fallback_library()
   # Fallback libraries are not loaded at runtime by default, but they can
   # be loaded if it is found that the application would crash otherwise.
   local library="$1"
-  local full_path="$(find_library "$1")"
-  local new_path="${appdir}/fallback/${library}"
-  mkdir -p "${new_path}" # directory has the same name as the library
-  cp -L "${full_path}" "${new_path}/${library}"
-  rm -f "${appdir}/lib/${library}"
+
+  if [ ! -z "$library" ]; then
+    local full_path="$(find_library "$1")"
+    local new_path="${appdir}/fallback/${library}"
+    mkdir -p "${new_path}" # directory has the same name as the library
+    cp -L "${full_path}" "${new_path}/${library}"
+    rm -f "${appdir}/lib/${library}"
+  fi
   # Use the AppRun script to check at runtime whether the user has a copy of
   # this library. If not then add our copy's directory to $LD_LIBRARY_PATH.
 }

@@ -228,7 +228,7 @@ function( audacity_append_common_compiler_options var use_pch )
             # include the correct config file; give absolute path to it, so
             # that this works whether in src, modules, libraries
             $<$<PLATFORM_ID:Windows>:
-               $<IF:$<CXX_COMPILER_ID:MSVC>, 
+               $<IF:$<CXX_COMPILER_ID:MSVC>,
                   /FI${CMAKE_BINARY_DIR}/src/private/configwin.h,
                   -include ${CMAKE_BINARY_DIR}/src/private/configwin.h
                >
@@ -473,7 +473,7 @@ function( audacity_module_fn NAME SOURCES IMPORT_TARGETS
       add_custom_command(
          TARGET "${TARGET}"
          POST_BUILD
-         COMMAND $<IF:$<CONFIG:Debug>,echo,strip> -x $<TARGET_FILE:${TARGET}>
+         COMMAND $<IF:$<CONFIG:Debug>,echo,${CMAKE_STRIP}> -x $<TARGET_FILE:${TARGET}>
       )
    endif()
 
