@@ -11,6 +11,8 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND
    message(FATAL_ERROR "Audacity requires at least GCC 4.9")
 endif ()
 
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+
 if( EXISTS "${CMAKE_SOURCE_DIR}/cmake-proxies/cmake-modules/Variables.cmake" )
    include( "${CMAKE_SOURCE_DIR}/cmake-proxies/cmake-modules/Variables.cmake" )
 endif()
@@ -166,6 +168,10 @@ if( APPLE )
       set( CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "-" CACHE INTERNAL "" )
       set( CMAKE_XCODE_ATTRIBUTE_OTHER_CODE_SIGN_FLAGS "--deep -o linker-signed --timestamp" CACHE INTERNAL "")
    endif()
+endif()
+
+if(NOT MSVC)
+   set( HAVE_VISIBILITY 1 )
 endif()
 
 # Load our functions/macros
@@ -659,10 +665,8 @@ add_subdirectory( "tests/journals" )
 if( CMAKE_SYSTEM_NAME MATCHES "Windows" )
    configure_file( src/audacity_config.h.in src/private/configwin.h )
 elseif( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
-   set( HAVE_VISIBILITY 1 )
    configure_file( src/audacity_config.h.in src/private/configmac.h )
 else()
-   set( HAVE_VISIBILITY 1 )
    configure_file( src/audacity_config.h.in src/private/configunix.h )
 endif()
 

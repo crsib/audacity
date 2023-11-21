@@ -50,6 +50,8 @@ StaffPadTimeAndPitch::StaffPadTimeAndPitch(
    BootStretcher();
 }
 
+StaffPadTimeAndPitch::~StaffPadTimeAndPitch() = default;
+
 void StaffPadTimeAndPitch::GetSamples(float* const* output, size_t outputLen)
 {
    if (!mTimeAndPitch)

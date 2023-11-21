@@ -11,6 +11,9 @@ public:
    StaffPadTimeAndPitch(
       int sampleRate, size_t numChannels, TimeAndPitchSource&,
       const Parameters&);
+
+   ~StaffPadTimeAndPitch() override;
+
    void GetSamples(float* const*, size_t) override;
 
 private:

@@ -19,27 +19,27 @@ should be reference-counted.
 
 \class CommandMessageTargetDecorator
 \brief CommandMessageTargetDecorator is a CommandOutputTarget that forwards
-its work on to another one.  Typically we derive from it to modify some 
+its work on to another one.  Typically we derive from it to modify some
 functionality and forward the rest.
 
 \class BriefCommandMessageTarget
 \brief BriefCommandMessageTarget is a CommandOutputTarget that provides
-status in a briefer listing 
+status in a briefer listing
 
 \class LispyCommandMessageTarget
-\brief LispyCommandMessageTarget is a CommandOutputTarget that provides status 
+\brief LispyCommandMessageTarget is a CommandOutputTarget that provides status
 in a lispy style.
 
 \class CommandOutputTargets
-\brief CommandOutputTargets a mix of three output classes to output 
+\brief CommandOutputTargets a mix of three output classes to output
 progress indication, status messages and errors.
 
 \class BriefCommandOutputTargets
-\brief BriefCommandOutputTargets is a CommandOutputTargets that  replaces the 
+\brief BriefCommandOutputTargets is a CommandOutputTargets that  replaces the
 status message target with the BriefCommandMessageTarget version.
 
 \class LispifiedCommandOutputTargets
-\brief LispifiedCommandOutputTargets is a CommandOutputTargets that  replaces the 
+\brief LispifiedCommandOutputTargets is a CommandOutputTargets that  replaces the
 status message target with the LispyCommandMessageTarget version.
 
 \class ProgressToMessageTarget
@@ -59,7 +59,7 @@ and sends it to that message target.
 class wxStatusBar;
 
 /// Interface for objects that can receive command progress information
-class CommandProgressTarget /* not final */
+class MENUS_API CommandProgressTarget /* not final */
 {
 public:
    virtual ~CommandProgressTarget();
@@ -205,7 +205,7 @@ public:
    ResponseTarget()
       : mSemaphore(0, 1),
         mBuffer(wxEmptyString)
-   { 
+   {
       // Cater for handling long responses quickly.
       mBuffer.Alloc(40000);
    }
@@ -247,7 +247,7 @@ public:
 };
 
 
-/** 
+/**
 \class TargetFactory
 \brief TargetFactory makes Command output targets.
  By default, we ignore progress updates but display all other messages directly
@@ -269,8 +269,8 @@ public:
 /// Used to aggregate the various output targets a command may have.
 /// Assumes responsibility for pointers passed into it.
 /// mProgressTarget is a unique pointer, but mStatusTraget and
-/// mErrorTarget are shared ones, because they may both point to the same 
-/// output 
+/// mErrorTarget are shared ones, because they may both point to the same
+/// output
 class CommandOutputTargets /* not final */
 {
 public:
