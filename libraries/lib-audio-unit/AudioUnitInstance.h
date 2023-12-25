@@ -16,7 +16,7 @@
 #include "AudioUnitWrapper.h"
 struct AudioUnitEvent;
 
-class AudioUnitInstance : public PerTrackEffect::Instance
+class AUDIO_UNIT_API AudioUnitInstance : public PerTrackEffect::Instance
    , public AudioUnitWrapper
 {
 public:

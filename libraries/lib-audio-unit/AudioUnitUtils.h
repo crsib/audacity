@@ -51,7 +51,7 @@ namespace AudioUnitUtils {
     Warning: on success, performs a "naked" allocation in pObject!
     Else, nulls it.
     */
-   OSStatus GetVariableSizePropertyPtr(AudioUnit unit, AudioUnitPropertyID inID,
+   AUDIO_UNIT_API OSStatus GetVariableSizePropertyPtr(AudioUnit unit, AudioUnitPropertyID inID,
       size_t minSize, void *&pObject, size_t &size,
       AudioUnitScope inScope, AudioUnitElement inElement);
 
@@ -79,7 +79,7 @@ namespace AudioUnitUtils {
    }
 
    //! Type-erased function to set an AudioUnit property
-   OSStatus SetPropertyPtr(AudioUnit unit, AudioUnitPropertyID inID,
+   AUDIO_UNIT_API OSStatus SetPropertyPtr(AudioUnit unit, AudioUnitPropertyID inID,
       const void *pProperty, UInt32 size, AudioUnitScope inScope,
       AudioUnitElement inElement);
 

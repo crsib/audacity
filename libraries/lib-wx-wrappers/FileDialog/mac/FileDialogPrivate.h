@@ -22,7 +22,7 @@ class wxChoice;
 // wxFileDialog
 //-------------------------------------------------------------------------
 
-class FileDialog: public FileDialogBase
+class WX_WRAPPERS_API FileDialog: public FileDialogBase
 {
 DECLARE_DYNAMIC_CLASS(FileDialog)
 protected:
@@ -54,7 +54,7 @@ public:
 #if wxOSX_USE_COCOA
     ~FileDialog();
 #endif
-    
+
     virtual void GetPaths(wxArrayString& paths) const { paths = m_paths; }
     virtual void GetFilenames(wxArrayString& files) const { files = m_fileNames ; }
 
@@ -67,9 +67,9 @@ public:
     virtual bool SupportsExtraControl() const;
 
     virtual void SetFileExtension(const wxString& extension);
-    
+
     // implementation only
-    
+
 #if wxOSX_USE_COCOA
     void DoViewResized(void* object);
     void DoSendFolderChangedEvent(void* panel, const wxString& path);
@@ -83,7 +83,7 @@ protected:
                            int WXUNUSED(sizeFlags) = wxSIZE_AUTO) {}
 
     void SetupExtraControls(WXWindow nativeWindow);
-    
+
 #if wxOSX_USE_COCOA
     void DoOnFilterSelected(int index);
     virtual void OnFilterSelected(wxCommandEvent &event);

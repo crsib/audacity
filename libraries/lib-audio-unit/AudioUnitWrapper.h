@@ -33,7 +33,7 @@ class AudioUnitWrapper;
 
 //! This works as a cached copy of state stored in an AudioUnit, but can also
 //! outlive it
-struct AudioUnitEffectSettings {
+struct AUDIO_UNIT_API AudioUnitEffectSettings {
    //! The effect object and all Settings objects coming from it share this
    //! set of strings, which allows Pair below to copy without allocations.
    /*!
@@ -48,7 +48,7 @@ struct AudioUnitEffectSettings {
 
    //! Optionally store a preset
    std::optional<SInt32> mPresetNumber;
-   
+
    //! Map from numerical parameter IDs (not always a small initial segment
    //! of the integers) to optional pairs of names and floating point values
    using Pair = std::pair<const wxString &, AudioUnitParameterValue>;
@@ -57,7 +57,7 @@ struct AudioUnitEffectSettings {
 
    AudioUnitEffectSettings() = default;
    AudioUnitEffectSettings(Map map) : values{ move(map) } {}
-   
+
    //! Get a pointer to a durable copy of `name`
    //! May allocate memory
    const wxString &Intern(const wxString &name) {
@@ -80,7 +80,7 @@ struct AudioUnitEffectSettings {
  Maintains a smart handle to an AudioUnit (also called AudioComponentInstance)
  in the SDK and defines some utility functions
  */
-struct AudioUnitWrapper
+struct AUDIO_UNIT_API AudioUnitWrapper
 {
    using Parameters = PackedArray::Ptr<const AudioUnitParameterID>;
 
@@ -192,7 +192,7 @@ protected:
    unsigned mAudioOuts{ 2 };
 };
 
-class AudioUnitWrapper::ParameterInfo final
+class AUDIO_UNIT_API AudioUnitWrapper::ParameterInfo final
 {
 public:
    //! Make a structure holding a key for the config file and a value

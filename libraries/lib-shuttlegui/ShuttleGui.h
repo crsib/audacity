@@ -79,7 +79,7 @@ class WrappedType;
 
 #include <wx/statbox.h> // to inherit
 
-class wxStaticBoxWrapper
+class SHUTTLEGUI_API wxStaticBoxWrapper
    : public wxStaticBox // inherit to get access to m_container
 {
 public:
@@ -93,7 +93,7 @@ public:
 
 /// Fix a defect in TAB key navigation to sliders, known to happen in wxWidgets
 /// 3.1.1 and maybe in earlier versions
-class wxSliderWrapper : public wxSlider
+class SHUTTLEGUI_API wxSliderWrapper : public wxSlider
 {
 public:
    using wxSlider::wxSlider;

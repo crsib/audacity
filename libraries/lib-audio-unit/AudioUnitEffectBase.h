@@ -25,7 +25,7 @@ constexpr auto UseLatencyKey = L"UseLatency";
 /* i18n-hint: the name of an Apple audio software protocol */
 #define AUDIOUNITEFFECTS_FAMILY EffectFamilySymbol{ wxT("AudioUnit"), XO("Audio Unit") }
 
-class AudioUnitEffectBase
+class AUDIO_UNIT_API AudioUnitEffectBase
    : public PerTrackEffect
    , public AudioUnitWrapper
 {

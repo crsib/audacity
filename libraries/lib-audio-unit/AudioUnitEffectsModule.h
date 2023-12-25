@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-class AudioUnitEffectsModule final : public PluginProvider
+class AUDIO_UNIT_API AudioUnitEffectsModule final : public PluginProvider
 {
 public:
    struct Factory : DefaultedGlobalHook<Factory,
@@ -62,9 +62,9 @@ public:
       const RegistrationCallback &callback)
          override;
 
-   
+
    bool CheckPluginExist(const PluginPath& path) const override;
-   
+
    std::unique_ptr<ComponentInterface>
       LoadPlugin(const PluginPath & path) override;
 
