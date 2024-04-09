@@ -35,6 +35,8 @@
 
 #include "Track.h"
 
+#include <wx/log.h>
+
 namespace audacity::cloud::audiocom::sync
 {
 namespace
@@ -524,8 +526,17 @@ void ProjectCloudExtension::Publish(
    CloudStatusChangedMessage cloudStatus, bool canMerge)
 {
    {
-      auto lock   = std::lock_guard { mStatusMutex };
+      auto lock = std::lock_guard { mStatusMutex };
+
       mLastStatus = cloudStatus;
+
+      wxLogInfo(wxString::Format(
+         "Sync status %d %f", int(mLastStatus.Status), mLastStatus.Progress));
+
+      if (mLastStatus.Error.has_value())
+         wxLogInfo(wxString::Format(
+            "Sync error %d %s", int(mLastStatus.Error->Type),
+            mLastStatus.Error->ErrorMessage));
    }
 
    mAsyncStateNotifier->Enqueue(cloudStatus, canMerge);

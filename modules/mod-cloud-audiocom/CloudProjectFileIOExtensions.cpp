@@ -38,6 +38,8 @@
 #include "ProjectFileManager.h"
 #include "ProjectWindow.h"
 
+#include <wx/log.h>
+
 namespace
 {
 using namespace audacity::cloud::audiocom;
@@ -214,6 +216,9 @@ class IOExtension final : public ProjectFileIOExtension
 
       const int savesCount = projectCloudExtension.GetSavesCount();
 
+      wxLogInfo(wxString::Format(
+         "Project %s saved %d times", project.GetProjectName(), savesCount));
+
       if (savesCount > 1)
          return;
 
@@ -227,14 +232,24 @@ class IOExtension final : public ProjectFileIOExtension
             if (!project)
                return true;
 
+            wxLogInfo(wxString::Format(
+               "Waiting for sync %s", project->GetProjectName()));
+
             return !ProjectCloudExtension::Get(*project).IsSyncing();
          },
          [weakProject = project.weak_from_this()]
          {
+            wxLogInfo("Predicate returned");
+
             auto project = weakProject.lock();
 
             if (!project)
                return;
+
+            wxLogInfo(wxString::Format(
+               "Sync status %s: %d", project->GetProjectName(),
+               int(ProjectCloudExtension::Get(*project)
+                      .GetCurrentSyncStatus())));
 
             if (
                ProjectCloudExtension::Get(*project).GetCurrentSyncStatus() !=
